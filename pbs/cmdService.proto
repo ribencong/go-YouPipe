@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package pbs;
+
+import "coreMsg.proto";
+
+service CmdService {
+    rpc ShowNodeInfo (EmptyRequest) returns (CommonResponse) {}
+    rpc ShowGossipViews (EmptyRequest) returns (CommonResponse) {}
+    rpc ShowThreadInfos (EmptyRequest) returns (CommonResponse) {}
+    rpc ShowSysConf (EmptyRequest) returns (CommonResponse) {}
+    rpc SetLogLevel (LogLevel) returns (CommonResponse) {}
+
+
+    rpc FindBootNode (BootNodeReq) returns (BootNodeRes) {}
+}
+
+message EmptyRequest {
+}
+
+message CommonResponse {
+    string msg = 1;
+}
+
+
+message BootNodeReq {
+    int32 MaxSize = 1;
+}
+
+message BootNodeRes {
+    repeated BootNodes Nodes = 1;
+}
+
+message LogLevel{
+    string Module = 1;
+    int32  Level  = 2;
+}

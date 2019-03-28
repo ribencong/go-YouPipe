@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package pbs;
+
+enum errorNo{
+    Success = 0;
+}
+
+message sock5Addr{
+    int32 aType = 1;
+    string host = 2;
+    string port = 3;
+}
+
+message commAck{
+    errorNo errNo       = 1;
+    string errMsg       = 2;
+}

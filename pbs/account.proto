@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package pbs;
+
+message Key{
+    bytes       publicKey   = 2;
+    bytes       privateKey  = 3;
+}
+
+message Account{
+    string      nodeId      = 1;
+    Key         key         = 2;
+}

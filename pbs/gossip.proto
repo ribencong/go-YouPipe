@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package pbs;
+
+enum MsgType{
+
+    Unknown         = 0;
+    SubInit         = 1;
+    Forward         = 2;
+    VoteContact     = 3;
+    GotContact      = 4;
+    SubSuccess      = 8;
+    HeartBeat       = 5;
+    WelCome         = 6;
+    UpdateWeight    = 7;
+    ReSubscribe     = 11;
+    ReplaceView     = 12;
+    NewForReplace   = 13;
+
+    AppPayload      = 24;
+}
+
+message Replace{
+    string NodeId   = 1;
+    string AlterId  = 2;
+    string IP       = 3;
+}
+
+message Vote{
+    string NodeId   = 1;
+    string IP       = 2;
+    int32 TTL       = 3;
+}
+
+message ID{
+    string nodeId = 1;
+}
+
+message IDWithIP{
+    string NodeId   = 1;
+    string IP       = 2;
+}
+
+message ForwardMsg{
+    string NodeId = 1;
+    string IP     = 2;
+    string msgId  = 3;
+}
+
+message Weight{
+    string NodeId       = 1;
+    double Weight       = 2;
+    int32  Direct       = 3;
+}
+
+message AppMsg{
+    string MsgId    = 1;
+    string LAddr    = 2;
+    string RAddr    = 3;
+    int32  TTL      = 4;
+    bytes  PayLoad  = 5;
+}
+
+message Gossip{
+    Vote        Vote            = 2;
+    ForwardMsg  Forward         = 3;
+    ID          ID              = 4;
+    Weight      UpdateWeight    = 5;
+    IDWithIP    IDWithIP        = 6;
+    Replace     RplView         = 7;
+    AppMsg      AppMsg          = 28;
+}

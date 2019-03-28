@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package pbs;
+
+enum YPMsgTyp{
+    _ = 0;
+    FindBootNode = 1;
+    BootNodeAck = 2;
+}
+
+message BootNodes{
+    string NodeId = 1;
+    string PeerIP = 2;
+    int32  PayLoad= 3;
+}
+
+message YouPipeMsg{
+    YPMsgTyp Typ = 1;
+    BootNodes Nodes = 2;
+}
