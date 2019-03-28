@@ -17,7 +17,7 @@ GoDoc at https://godoc.org/github.com/youpipe/go-youPipe/
 
 ## Install
 
-Pre-built binaries for common platforms are available at https://github.com/shadowsocks/go-shadowsocks2/releases
+Pre-built binaries for common platforms are available at https://github.com/youpipe/go-youPipe/releases
 
 Install from source
 
