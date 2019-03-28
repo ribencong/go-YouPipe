@@ -1,18 +1,25 @@
 package account
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/btcsuite/btcutil/base58"
-	"github.com/golang/protobuf/proto"
-	"github.com/youpipe/go-youPipe/pbs"
 	"github.com/youpipe/go-youPipe/utils"
 	"io/ioutil"
+	"os"
 	"sync"
 )
 
 type Account struct {
+	sync.RWMutex
 	NodeId string
 	Key    *Key
+}
+
+type accData struct {
+	Version string `json:"version"`
+	Address string `json:"address"`
+	Cipher  string `json:"cipher"`
 }
 
 var (
@@ -35,16 +42,14 @@ func CreateAccount(password string) string {
 	if err != nil {
 		panic(err)
 	}
-
-	acc := &pbs.Account{
-		NodeId: key.ToNodeId(),
-		Key: &pbs.Key{
-			PrivateKey: key.PriKey,
-			PublicKey:  key.PubKey[:],
-		},
+	defer key.Lock()
+	address := key.ToNodeId()
+	w := accData{
+		Version: utils.CurrentVersion,
+		Address: address,
+		Cipher:  base58.Encode(key.LockedKey),
 	}
-
-	data, err := proto.Marshal(acc)
+	data, err := json.Marshal(w)
 	if err != nil {
 		panic(err)
 	}
@@ -53,7 +58,7 @@ func CreateAccount(password string) string {
 	if err := ioutil.WriteFile(path, data, 0644); err != nil {
 		panic(err)
 	}
-	return acc.NodeId
+	return address
 }
 
 func (acc *Account) IsEmpty() bool {
@@ -73,48 +78,39 @@ func newNode() *Account {
 	obj := &Account{}
 
 	path := utils.SysConf.AccDataPath
-	if _, ok := utils.FileExists(path); !ok {
+	fil, err := os.Open(path)
 
-		err := ioutil.WriteFile(path, []byte{}, 0644)
-		if err != nil {
+	if err != nil {
+		if !os.IsNotExist(err) {
+			panic(err)
+		}
+		if err := ioutil.WriteFile(path, []byte{}, 0644); err != nil {
 			panic(err)
 		}
 
 		return obj
 	}
 
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
+	defer fil.Close()
+
+	acc := &accData{}
+	parser := json.NewDecoder(fil)
+	if err = parser.Decode(acc); err != nil {
 		panic(err)
 	}
 
-	if len(data) == 0 {
-		return obj
-	}
-
-	pbAcc := pbs.Account{}
-	if err := proto.Unmarshal(data, &pbAcc); err != nil {
-		logger.Panicf("unknown account data :->%v", err)
-	}
-	obj.NodeId = pbAcc.NodeId
+	obj.NodeId = acc.Address
 	obj.Key = &Key{
-		PriKey: pbAcc.Key.PrivateKey,
+		LockedKey: base58.Decode(acc.Cipher),
 	}
-	copy(obj.Key.PubKey[:], pbAcc.Key.PublicKey)
 
 	return obj
 }
 
-func (acc *Account) ToPubKey() PublicKey {
-
-	if len(acc.NodeId) <= len(AccPrefix) {
-		return PublicKey{}
-	}
-
-	realStr := acc.NodeId[len(AccPrefix):]
-	pubData := base58.Decode(realStr)
-
-	var key PublicKey
-	copy(key[:], pubData)
-	return key
-}
+//
+//func (acc *Account) ToPubKey() []byte {
+//	if len(acc.NodeId) <= len(AccPrefix) {
+//		return nil
+//	}
+//	return base58.Decode(acc.NodeId[len(AccPrefix):])
+//}
