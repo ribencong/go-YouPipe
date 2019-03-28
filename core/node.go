@@ -1,10 +1,10 @@
 package core
 
 import (
-	"github.com/youpipe/go-node/account"
-	"github.com/youpipe/go-node/gossip"
-	"github.com/youpipe/go-node/service"
-	"github.com/youpipe/go-node/utils"
+	"github.com/youpipe/go-youPipe/account"
+	"github.com/youpipe/go-youPipe/gossip"
+	"github.com/youpipe/go-youPipe/service"
+	"github.com/youpipe/go-youPipe/utils"
 	"sync"
 )
 

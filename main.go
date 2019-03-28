@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/youpipe/go-node/cmd"
+	"github.com/youpipe/go-youPipe/cmd"
 )
 
 func main() {

@@ -2,7 +2,7 @@ package gossip
 
 import (
 	"fmt"
-	"github.com/youpipe/go-node/pbs"
+	"github.com/youpipe/go-youPipe/pbs"
 	"sync"
 )
 

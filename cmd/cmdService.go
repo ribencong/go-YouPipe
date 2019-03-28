@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"context"
-	"github.com/youpipe/go-node/pbs"
-	"github.com/youpipe/go-node/utils"
+	"github.com/youpipe/go-youPipe/pbs"
+	"github.com/youpipe/go-youPipe/utils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"net"

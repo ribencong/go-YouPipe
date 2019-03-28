@@ -1,8 +1,8 @@
 package gossip
 
 import (
-	"github.com/youpipe/go-node/pbs"
-	"github.com/youpipe/go-node/utils"
+	"github.com/youpipe/go-youPipe/pbs"
+	"github.com/youpipe/go-youPipe/utils"
 	"net"
 	"time"
 )

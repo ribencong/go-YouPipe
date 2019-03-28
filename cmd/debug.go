@@ -4,10 +4,10 @@ import (
 	"context"
 	"github.com/op/go-logging"
 	"github.com/spf13/cobra"
-	"github.com/youpipe/go-node/core"
-	"github.com/youpipe/go-node/pbs"
-	"github.com/youpipe/go-node/thread"
-	"github.com/youpipe/go-node/utils"
+	"github.com/youpipe/go-youPipe/core"
+	"github.com/youpipe/go-youPipe/pbs"
+	"github.com/youpipe/go-youPipe/thread"
+	"github.com/youpipe/go-youPipe/utils"
 )
 
 /************************************************************************

@@ -1,8 +1,8 @@
 # go-node
 
-A implementation of Shadowsocks plus Block Chain in Go.
+A implementation of Shadowsocks with Block Chain in Go.
 
-GoDoc at https://godoc.org/github.com/youpipe/go-node/
+GoDoc at https://godoc.org/github.com/youpipe/go-youPipe/
 
 
 ## Features
@@ -22,7 +22,7 @@ Pre-built binaries for common platforms are available at https://github.com/shad
 Install from source
 
 ```sh
-go get -u -v github.com/youpipe/go-node
+go get -u -v github.com/youpipe/go-youPipe
 ```
 
 

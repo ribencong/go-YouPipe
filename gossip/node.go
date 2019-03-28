@@ -2,8 +2,8 @@ package gossip
 
 import (
 	"fmt"
-	"github.com/youpipe/go-node/network"
-	"github.com/youpipe/go-node/utils"
+	"github.com/youpipe/go-youPipe/network"
+	"github.com/youpipe/go-youPipe/utils"
 	"net"
 	"sync"
 	"time"

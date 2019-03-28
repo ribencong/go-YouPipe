@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/golang/protobuf/proto"
-	"github.com/youpipe/go-node/pbs"
-	"github.com/youpipe/go-node/utils"
+	"github.com/youpipe/go-youPipe/pbs"
+	"github.com/youpipe/go-youPipe/utils"
 	"io/ioutil"
 	"sync"
 )

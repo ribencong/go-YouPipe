@@ -3,9 +3,9 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	"github.com/youpipe/go-node/account"
-	"github.com/youpipe/go-node/core"
-	"github.com/youpipe/go-node/utils"
+	"github.com/youpipe/go-youPipe/account"
+	"github.com/youpipe/go-youPipe/core"
+	"github.com/youpipe/go-youPipe/utils"
 	"golang.org/x/crypto/ssh/terminal"
 )
 

@@ -3,8 +3,8 @@ package gossip
 import (
 	"context"
 	"fmt"
-	"github.com/youpipe/go-node/pbs"
-	"github.com/youpipe/go-node/thread"
+	"github.com/youpipe/go-youPipe/pbs"
+	"github.com/youpipe/go-youPipe/thread"
 	"math/rand"
 	"net"
 )

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/spf13/cobra"
-	"github.com/youpipe/go-node/core"
-	"github.com/youpipe/go-node/pbs"
+	"github.com/youpipe/go-youPipe/core"
+	"github.com/youpipe/go-youPipe/pbs"
 )
 
 var adminParam = struct {
