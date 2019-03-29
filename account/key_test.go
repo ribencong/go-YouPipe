@@ -1,12 +1,12 @@
 package account
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
-	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/scrypt"
 	"io"
 	"testing"
@@ -128,14 +128,39 @@ func TestScrypt(t *testing.T) {
 	t.Log(base64.StdEncoding.EncodeToString(dk))
 }
 
+func TestNodeId(t *testing.T) {
+	key, err := GenerateKey(password)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log("pubKey", key.pubKey)
+	t.Log("priKey", key.priKey)
+	t.Log("eDPriKey", key.eDPriKey)
+	t.Log("eDPubKey", key.eDPubKey)
+	t.Log("LockedKey", key.LockedKey)
+
+	nid := key.ToNodeId()
+	t.Log("nid", nid)
+	pub := ToPubKey(nid)
+	t.Log("pub", pub)
+	if !bytes.Equal(pub, key.pubKey[:]) {
+		t.Errorf("node id(%s)and public key (%s)"+
+			" is not equal with original (%s)", nid, pub, key.pubKey)
+	}
+}
+
 func TestGenerateKeyPair(t *testing.T) {
 	key, err := GenerateKey(password)
 	if err != nil {
 		t.Error(err)
 	}
 	edpub, edpri, pub, pri := key.eDPubKey, key.eDPriKey, key.pubKey, key.priKey
-	key.priKey = [KeyLen]byte{0}
-	key.eDPriKey = [ed25519.PrivateKeySize]byte{0}
+	//key.priKey = [KeyLen]byte{0}
+	//aa := [64]byte{0}
+	////
+	//copy(key.eDPriKey, aa[:64])
+	//key.eDPriKey = make([]byte, 64)
+
 	printKey(t, key)
 
 	aesKey, err := getAESKey(key.pubKey[:kp.S], password) //scrypt.Key([]byte(password), k.PubKey[:kp.S], kp.N, kp.R, kp.P, kp.L)
@@ -150,16 +175,17 @@ func TestGenerateKeyPair(t *testing.T) {
 
 	t.Log("raw:", raw)
 
-	key.fillPrivateKey(raw)
+	key.curve25519KeyPair = curveKey(raw)
+	key.ed25519KeyPair = edKey(raw)
 
 	printKey(t, key)
 
 	//if !bytes.Equal(edpub, key.eDPubKey) {
-	if edpub != key.eDPubKey {
+	if !bytes.Equal(edpub, key.eDPubKey) {
 		t.Error("ed public key is not equal", edpub, key.eDPubKey)
 	}
 	//if !bytes.Equal(edpri, key.eDPriKey){
-	if edpri != key.eDPriKey {
+	if !bytes.Equal(edpri, key.eDPriKey) {
 		t.Error("ed pri key is not equal", edpri, key.eDPriKey)
 	}
 

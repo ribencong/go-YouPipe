@@ -27,19 +27,20 @@ var kp = struct {
 	L: 32,
 }
 
+type YouPipeKey [KeyLen]byte
 type curve25519KeyPair struct {
-	priKey [KeyLen]byte
-	pubKey [KeyLen]byte
+	priKey YouPipeKey
+	pubKey YouPipeKey
 }
 
 type ed25519KeyPair struct {
-	eDPriKey [ed25519.PrivateKeySize]byte
-	eDPubKey [ed25519.PublicKeySize]byte
+	eDPriKey ed25519.PrivateKey
+	eDPubKey ed25519.PublicKey
 }
 
 type Key struct {
-	curve25519KeyPair
-	ed25519KeyPair
+	*curve25519KeyPair
+	*ed25519KeyPair
 	LockedKey []byte
 }
 
@@ -49,13 +50,18 @@ func getAESKey(salt []byte, password string) ([]byte, error) {
 
 func GenerateKey(password string) (*Key, error) {
 
-	k := &Key{}
-	_, priAsSeed, err := ed25519.GenerateKey(rand.Reader)
+	pub, pri, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		panic(err)
 	}
 
-	k.fillPrivateKey(priAsSeed)
+	k := &Key{
+		ed25519KeyPair: &ed25519KeyPair{
+			eDPubKey: pub,
+			eDPriKey: pri,
+		},
+		curve25519KeyPair: curveKey(pri[:]),
+	}
 
 	aesKey, err := getAESKey(k.pubKey[:kp.S], password)
 	if err != nil {
@@ -72,35 +78,31 @@ func GenerateKey(password string) (*Key, error) {
 	return k, nil
 }
 
-func (k *Key) fillPrivateKey(rawKey []byte) {
-	copy(k.eDPriKey[:], rawKey)
-	copy(k.eDPubKey[:], rawKey[32:])
-	copy(k.priKey[:], rawKey[:32])
-	curve25519.ScalarBaseMult(&k.pubKey, &k.priKey)
-}
-
-func (k *Key) Lock() {
-	k.priKey = [KeyLen]byte{0}
-	k.eDPriKey = [ed25519.PrivateKeySize]byte{0}
-}
-
-func (k *Key) Unlock(password string) bool {
-	aesKey, err := getAESKey(k.pubKey[:kp.S], password) //scrypt.Key([]byte(password), k.PubKey[:kp.S], kp.N, kp.R, kp.P, kp.L)
-	if err != nil {
-		logger.Warning("error to generate aes key:->", err)
-		return false
-	}
-
-	raw, err := Decrypt(aesKey, k.LockedKey)
-	if err != nil {
-		logger.Warning("error to unlock raw private key:->", err)
-		return false
-	}
-
-	k.fillPrivateKey(raw)
-	return true
-}
-
-func (k *Key) ToNodeId() string {
+func (k Key) ToNodeId() string {
 	return AccPrefix + base58.Encode(k.pubKey[:])
 }
+
+func curveKey(data []byte) *curve25519KeyPair {
+	ck := &curve25519KeyPair{}
+	copy(ck.priKey[:], data[:KeyLen])
+	curve25519.ScalarBaseMult((*[KeyLen]byte)(&ck.pubKey), (*[KeyLen]byte)(&ck.priKey))
+	return ck
+}
+
+func edKey(data []byte) *ed25519KeyPair {
+	ek := &ed25519KeyPair{
+		eDPriKey: make([]byte, ed25519.PrivateKeySize),
+		eDPubKey: make([]byte, ed25519.PublicKeySize),
+	}
+	copy(ek.eDPriKey[:], data[:])
+	copy(ek.eDPubKey[:], data[32:])
+	return ek
+}
+
+//
+//func fillPrivateKey(k *Key, rawKey []byte) {
+//	copy(k.eDPriKey[:], rawKey)
+//	copy(k.eDPubKey[:], rawKey[32:])
+//	copy(k.priKey[:], rawKey[:32])
+//	curve25519.ScalarBaseMult((*[32]byte)(&k.pubKey), (*[32]byte)(&k.priKey))
+//}

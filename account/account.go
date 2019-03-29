@@ -1,12 +1,12 @@
 package account
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/op/go-logging"
 	"github.com/youpipe/go-youPipe/utils"
-	"golang.org/x/crypto/ed25519"
 	"io/ioutil"
 	"os"
 	"sync"
@@ -102,13 +102,15 @@ func newNode() *Account {
 	return obj
 }
 
-func (acc *Account) LockAcc() {
-	acc.Key.priKey = [KeyLen]byte{0}
-	acc.Key.eDPriKey = [ed25519.PrivateKeySize]byte{0}
-}
+//func (acc *Account) LockAcc() {
+//	acc.Key.Lock()
+//}
 
 func (acc *Account) UnlockAcc(password string) bool {
-	aesKey, err := getAESKey(acc.Key.pubKey[:kp.S], password) //scrypt.Key([]byte(password), k.PubKey[:kp.S], kp.N, kp.R, kp.P, kp.L)
+
+	pk := ToPubKey(acc.NodeId)
+
+	aesKey, err := getAESKey(pk[:kp.S], password) //scrypt.Key([]byte(password), k.PubKey[:kp.S], kp.N, kp.R, kp.P, kp.L)
 	if err != nil {
 		logger.Warning("error to generate aes key:->", err)
 		return false
@@ -116,18 +118,24 @@ func (acc *Account) UnlockAcc(password string) bool {
 
 	raw, err := Decrypt(aesKey, acc.Key.LockedKey)
 	if err != nil {
-		logger.Warning("error to unlock raw private key:->", err)
+		logger.Warning("Unlock raw private key:->", err)
 		return false
 	}
 
-	acc.Key.fillPrivateKey(raw)
+	tmpKey := curveKey(raw)
+	if !bytes.Equal(pk, tmpKey.pubKey[:]) {
+		logger.Warning("Unlock public failed")
+		return false
+	}
+	acc.Key.curve25519KeyPair = tmpKey
+	acc.Key.ed25519KeyPair = edKey(raw)
 	return true
 }
 
-//
-//func (acc *Account) ToPubKey() []byte {
-//	if len(acc.NodeId) <= len(AccPrefix) {
-//		return nil
-//	}
-//	return base58.Decode(acc.NodeId[len(AccPrefix):])
-//}
+func ToPubKey(nid string) []byte {
+	if len(nid) <= len(AccPrefix) {
+		return nil
+	}
+	ss := nid[len(AccPrefix):]
+	return base58.Decode(ss)
+}

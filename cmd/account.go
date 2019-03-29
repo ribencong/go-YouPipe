@@ -38,7 +38,7 @@ func init() {
 func createAccount(_ *cobra.Command, _ []string) {
 
 	if !account.GetAccount().IsEmpty() {
-		logger.Fatalf("Duplicate account!")
+		fmt.Println("Duplicate account!")
 		return
 	}
 	if len(password) == 0 {

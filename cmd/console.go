@@ -86,19 +86,19 @@ func initYouPipeConf() {
 	logger.Info(core.ConfigShow())
 }
 
-func unlockMinerAccount() {
+func unlockMinerAccount() error {
 
 	acc := account.GetAccount()
 	if acc.IsEmpty() {
-		fmt.Println("No account, use: [youPipe account create]")
-		return
+		return fmt.Errorf("no account, use: [youPipe account create]")
 	}
 	if len(param.withMining) > 0 {
 		if ok := acc.UnlockAcc(param.withMining); !ok {
-			panic("account password wrong!")
+			return fmt.Errorf("account password wrong")
 		}
 	}
 
+	return nil
 }
 
 func mainRun(_ *cobra.Command, _ []string) {
@@ -108,7 +108,10 @@ func mainRun(_ *cobra.Command, _ []string) {
 		return
 	}
 
-	unlockMinerAccount()
+	if err := unlockMinerAccount(); err != nil {
+		fmt.Println(err.Error())
+		return
+	}
 
 	go startCmdService()
 
