@@ -2,10 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/op/go-logging"
 	"github.com/spf13/cobra"
 	"github.com/youpipe/go-youPipe/account"
 	"github.com/youpipe/go-youPipe/core"
-	"github.com/youpipe/go-youPipe/gossip"
 	"github.com/youpipe/go-youPipe/network"
 	"github.com/youpipe/go-youPipe/service"
 	"github.com/youpipe/go-youPipe/utils"
@@ -14,12 +14,11 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
-	"time"
 )
 
 var nbsUsage = `TODO::......`
 
-var logger = utils.NewLog("cmd")
+var logger, _ = logging.GetLogger("cmd")
 
 var rootCmd = &cobra.Command{
 	Use: "youPipe",
@@ -33,10 +32,11 @@ var rootCmd = &cobra.Command{
 
 var param struct {
 	version    bool
+	debug      bool
 	confFile   string
 	server     string
 	bootServer string
-	subDur     int
+	withMining string
 }
 
 func init() {
@@ -52,8 +52,12 @@ func init() {
 	rootCmd.Flags().StringVarP(&param.bootServer, "bootstrap",
 		"b", "", "boot strap server")
 
-	rootCmd.Flags().IntVarP(&param.subDur, "gspSubTime",
-		"d", -1, "subscribe duration in seconds for gossip protocol")
+	rootCmd.Flags().StringVarP(&param.withMining, "mine",
+		"m", "", "Start server with mining function -m [PASSWORD] "+
+			"will unlock your account and mine YPC")
+
+	rootCmd.Flags().BoolVarP(&param.debug, "debug",
+		"d", false, "run in debug model")
 }
 
 func Execute() {
@@ -64,11 +68,7 @@ func Execute() {
 	}
 }
 
-func loadConf() {
-	acc := account.GetAccount()
-	if acc.IsEmpty() {
-		logger.Fatal("current node is empty and need to creat an account: youPipe account create")
-	}
+func initYouPipeConf() {
 
 	core.LoadYouPipeConf(param.confFile)
 
@@ -78,47 +78,65 @@ func loadConf() {
 	if len(param.bootServer) != 0 {
 		network.Config.BootStrapServer = param.bootServer
 	}
-	if param.subDur > 0 {
-		gossip.Config.GspSubDuration = time.Second * time.Duration(param.subDur)
+	if param.debug {
+		utils.SysDebugMode = true
+		utils.SystemLogLevel = logging.DEBUG
 	}
-
-	fmt.Println(core.ConfigShow())
+	utils.ApplyLogLevel()
+	logger.Info(core.ConfigShow())
 }
 
-func setPid(pid string) {
+func unlockMinerAccount() {
 
-	if err := ioutil.WriteFile(utils.SysConf.PidPath, []byte(pid), 0644); err != nil {
-		fmt.Print("failed to write running pid", err)
+	acc := account.GetAccount()
+	if acc.IsEmpty() {
+		fmt.Println("No account, use: [youPipe account create]")
+		return
 	}
+	if len(param.withMining) > 0 {
+		if ok := acc.UnlockAcc(param.withMining); !ok {
+			panic("account password wrong!")
+		}
+	}
+
 }
 
 func mainRun(_ *cobra.Command, _ []string) {
+
 	if param.version {
-		fmt.Print(utils.CurrentVersion)
+		fmt.Println(utils.CurrentVersion)
 		return
 	}
 
-	loadConf()
+	unlockMinerAccount()
+
 	go startCmdService()
 
-	core.GetNodeInst().Run()
+	initYouPipeConf()
+
+	node := core.GetNodeInst()
+	node.Start()
+
+	done := make(chan bool, 1)
+	go waitSignal(done)
+	<-done
+}
+
+func waitSignal(done chan bool) {
 
 	pid := strconv.Itoa(os.Getpid())
-	fmt.Printf(">>>>>>>>>>node start at pid(%s)<<<<<<<<<<", pid)
-	setPid(pid)
+	logger.Warningf("\n>>>>>>>>>>YouPipe node start at pid(%s)<<<<<<<<<<", pid)
+	if err := ioutil.WriteFile(utils.SysConf.PidPath, []byte(pid), 0644); err != nil {
+		fmt.Print("failed to write running pid", err)
+	}
 
 	sigCh := make(chan os.Signal, 1)
-	done := make(chan bool, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 
-	go func() {
-		sig := <-sigCh
-		setPid("-1")
-		logger.Warning(sig)
-		done <- true
-	}()
-	utils.ApplyLogLevel()
-	<-done
+	sig := <-sigCh
+
 	core.GetNodeInst().Destroy()
-	fmt.Printf(">>>>>>>>>>process finished<<<<<<<<<<")
+	logger.Warningf("\n>>>>>>>>>>process finished(%s)<<<<<<<<<<\n", sig)
+
+	done <- true
 }

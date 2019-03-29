@@ -1,6 +1,7 @@
 package core
 
 import (
+	"github.com/op/go-logging"
 	"github.com/youpipe/go-youPipe/account"
 	"github.com/youpipe/go-youPipe/gossip"
 	"github.com/youpipe/go-youPipe/service"
@@ -9,9 +10,9 @@ import (
 )
 
 var (
-	instance *YouPipeNode = nil
-	once     sync.Once
-	logger   = utils.NewLog(utils.LMCore)
+	instance  *YouPipeNode = nil
+	once      sync.Once
+	logger, _ = logging.GetLogger(utils.LMCore)
 )
 
 type YouPipeNode struct {
@@ -38,15 +39,12 @@ func newNode() *YouPipeNode {
 
 	obj.GossipNode.NodeID = obj.NodeId
 	obj.SetGspFilter()
-
-	logger.Info("<---Create YouPipe Node Success--->")
 	return obj
 }
 
-func (n *YouPipeNode) Run() {
+func (n *YouPipeNode) Start() {
 	go n.GossipNode.JoinSwarm()
 	go n.ServeNode.Mining()
-	logger.Info("<---YouPipe node start working--->")
 }
 
 func (n *YouPipeNode) Destroy() {

@@ -1,15 +1,16 @@
 package service
 
 import (
+	"github.com/op/go-logging"
 	"github.com/youpipe/go-youPipe/utils"
 	"net"
 	"sync"
 )
 
 var (
-	instance *SNode = nil
-	once     sync.Once
-	logger   = utils.NewLog(utils.LMService)
+	instance  *SNode = nil
+	once      sync.Once
+	logger, _ = logging.GetLogger(utils.LMService)
 )
 
 const MaxAddrLen = 1 + 1 + 255 + 2

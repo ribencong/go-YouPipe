@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/scrypt"
 	"io"
 	"testing"
@@ -133,17 +134,35 @@ func TestGenerateKeyPair(t *testing.T) {
 		t.Error(err)
 	}
 	edpub, edpri, pub, pri := key.eDPubKey, key.eDPriKey, key.pubKey, key.priKey
-	key.Lock()
+	key.priKey = [KeyLen]byte{0}
+	key.eDPriKey = [ed25519.PrivateKeySize]byte{0}
+	printKey(t, key)
+
+	aesKey, err := getAESKey(key.pubKey[:kp.S], password) //scrypt.Key([]byte(password), k.PubKey[:kp.S], kp.N, kp.R, kp.P, kp.L)
+	if err != nil {
+		t.Error("error to generate aes key:->", err)
+	}
+	t.Log("aesKey:", aesKey)
+	raw, err := Decrypt(aesKey, key.LockedKey)
+	if err != nil {
+		t.Error("error to unlock raw private key:->", err)
+	}
+
+	t.Log("raw:", raw)
+
+	key.fillPrivateKey(raw)
 
 	printKey(t, key)
 
-	key.Unlock(password)
+	//if !bytes.Equal(edpub, key.eDPubKey) {
 	if edpub != key.eDPubKey {
 		t.Error("ed public key is not equal", edpub, key.eDPubKey)
 	}
+	//if !bytes.Equal(edpri, key.eDPriKey){
 	if edpri != key.eDPriKey {
 		t.Error("ed pri key is not equal", edpri, key.eDPriKey)
 	}
+
 	if pub != key.pubKey {
 		t.Error("public key is not equal", pub, key.pubKey)
 	}

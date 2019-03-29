@@ -1,24 +1,25 @@
 package utils
 
 import (
-	"fmt"
 	"github.com/op/go-logging"
 	"os"
 )
 
 const (
-	LMGossip              = "gossip"
-	LMCore                = "core"
-	LMThread              = "thread"
-	LMAccount             = "account"
-	LMService             = "service"
+	LMGossip  = "gossip"
+	LMCore    = "core"
+	LMThread  = "thread"
+	LMAccount = "account"
+	LMService = "service"
+	//LMUtils               = "utils"
 	DefaultSystemLogLevel = logging.INFO
 )
 
 var (
+	//logger, _ = logging.GetLogger(LMUtils)
 	SystemLogLevel = DefaultSystemLogLevel
-
-	LogModules = []string{
+	SysDebugMode   = false
+	LogModules     = []string{
 		LMGossip,
 		LMCore,
 		LMThread,
@@ -27,13 +28,15 @@ var (
 	}
 )
 
-func NewLog(module string) *logging.Logger {
+type Password string
 
-	logIns, _ := logging.GetLogger(module)
+func (p Password) Redacted() interface{} {
+	return logging.Redact(string(p))
+}
 
+func init() {
 	logFile, err := os.OpenFile(SysConf.LogPath,
 		os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
-
 	if err != nil {
 		panic(err)
 	}
@@ -46,33 +49,23 @@ func NewLog(module string) *logging.Logger {
 	fileFormatBackend := logging.NewBackendFormatter(fileBackend, fileFormat)
 
 	leveledFileBackend := logging.AddModuleLevel(fileFormatBackend)
-
-	cmdFormat := logging.MustStringFormatter(
-		`%{color}%{time:01-02/15:04:05} %{shortfile:-20.18s} %{shortfunc:-20.20s} [%{level:.4s}] %{message}%{color:reset}`,
-	)
-	cmdBackend := logging.NewLogBackend(os.Stdout, "\n>>>", 0)
-	formattedCmdBackend := logging.NewBackendFormatter(cmdBackend, cmdFormat)
-
-	logging.SetBackend(leveledFileBackend, formattedCmdBackend)
-
-	SetModuleLogLevel(SystemLogLevel, module)
-
-	return logIns
-}
-
-type Password string
-
-func (p Password) Redacted() interface{} {
-	return logging.Redact(string(p))
+	logging.SetBackend(leveledFileBackend)
 }
 
 func ApplyLogLevel() {
+	if SysDebugMode {
+		cmdFormat := logging.MustStringFormatter(
+			`%{color}%{time:01-02/15:04:05} %{shortfile:-20.18s} %{shortfunc:-20.20s} [%{level:.4s}] %{message}%{color:reset}`,
+		)
+		cmdBackend := logging.NewLogBackend(os.Stdout, "\n>>>", 0)
+		formattedCmdBackend := logging.NewBackendFormatter(cmdBackend, cmdFormat)
+
+		logging.SetBackend(formattedCmdBackend)
+	}
+
 	for _, m := range LogModules {
 		SetModuleLogLevel(SystemLogLevel, m)
 	}
-
-	fmt.Println()
-	fmt.Println(">>>>>>>>>>Apply log level success!<<<<<<<<<<")
 }
 
 func SetModuleLogLevel(level logging.Level, module string) {

@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/btcsuite/btcutil/base58"
+	"github.com/op/go-logging"
 	"github.com/youpipe/go-youPipe/utils"
+	"golang.org/x/crypto/ed25519"
 	"io/ioutil"
 	"os"
 	"sync"
@@ -23,9 +25,9 @@ type accData struct {
 }
 
 var (
-	logger            = utils.NewLog(utils.LMAccount)
-	instance *Account = nil
-	once     sync.Once
+	logger, _          = logging.GetLogger(utils.LMAccount)
+	instance  *Account = nil
+	once      sync.Once
 )
 
 func GetAccount() *Account {
@@ -42,8 +44,6 @@ func CreateAccount(password string) string {
 	if err != nil {
 		panic(err)
 	}
-	defer key.Lock()
-
 	address := key.ToNodeId()
 	w := accData{
 		Version: utils.CurrentVersion,
@@ -100,6 +100,28 @@ func newNode() *Account {
 	}
 
 	return obj
+}
+
+func (acc *Account) LockAcc() {
+	acc.Key.priKey = [KeyLen]byte{0}
+	acc.Key.eDPriKey = [ed25519.PrivateKeySize]byte{0}
+}
+
+func (acc *Account) UnlockAcc(password string) bool {
+	aesKey, err := getAESKey(acc.Key.pubKey[:kp.S], password) //scrypt.Key([]byte(password), k.PubKey[:kp.S], kp.N, kp.R, kp.P, kp.L)
+	if err != nil {
+		logger.Warning("error to generate aes key:->", err)
+		return false
+	}
+
+	raw, err := Decrypt(aesKey, acc.Key.LockedKey)
+	if err != nil {
+		logger.Warning("error to unlock raw private key:->", err)
+		return false
+	}
+
+	acc.Key.fillPrivateKey(raw)
+	return true
 }
 
 //

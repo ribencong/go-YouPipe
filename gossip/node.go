@@ -2,6 +2,7 @@ package gossip
 
 import (
 	"fmt"
+	"github.com/op/go-logging"
 	"github.com/youpipe/go-youPipe/network"
 	"github.com/youpipe/go-youPipe/utils"
 	"net"
@@ -10,9 +11,9 @@ import (
 )
 
 var (
-	instance *GNode = nil
-	once     sync.Once
-	logger   = utils.NewLog(utils.LMGossip)
+	instance  *GNode = nil
+	once      sync.Once
+	logger, _ = logging.GetLogger(utils.LMGossip)
 )
 
 func GetGspNode() *GNode {
@@ -44,7 +45,7 @@ func newGossipNode() *GNode {
 		panic(err)
 	}
 
-	logger.Debugf("gossip server listening(%s)", l.Addr().String())
+	logger.Infof("gossip server listening(%s)", l.Addr().String())
 	obj := &GNode{
 		server:  l,
 		timers:  make(TimerTask),
@@ -99,7 +100,7 @@ func (n *GNode) String() string {
 	str := fmt.Sprintf("\n\n------%s------"+
 		n.outPut.String("OUT")+
 		n.income.String("IN ")+
-		"\n---expire:%s-----%15s---------",
+		"\n---expire:%s-----%15s---------\n",
 		n.NodeID,
 		n.expired.Format(utils.SysTimeFormat),
 		n.VisibleIp)

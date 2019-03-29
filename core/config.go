@@ -68,7 +68,7 @@ func LoadYouPipeConf(path string) {
 }
 
 func ConfigShow() string {
-	return fmt.Sprintf("\n\n+++++++++++++++++++++++%8s++++++++++++++++++++++++++++\n"+
+	return fmt.Sprintf("\n+++++++++++++++++++++++%8s++++++++++++++++++++++++++++\n"+
 		service.Config.String()+
 		gossip.Config.String()+
 		network.Config.String()+
@@ -79,5 +79,5 @@ func ConfigShow() string {
 }
 
 //TODO::
-func MigrateConf() {
-}
+//func MigrateConf() {
+//}

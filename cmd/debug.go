@@ -95,7 +95,7 @@ var logDebugCmd = &cobra.Command{
 	Use:   "log",
 	Short: "set log levels",
 	Long: ` youPipe debug log [module] -l <Level>
-	module: ["gossip", "core", "thread","account", "service"]  
+	module: ["all", gossip", "core", "thread","account", "service"]  
 	Level: [5=DEBUG, 4=INFO, 3=NOTICE, 2=WARNING, 1=ERROR, 0=CRITICAL`,
 	Run:  logLevel,
 	Args: cobra.MinimumNArgs(1),
@@ -144,6 +144,13 @@ func (s *cmdService) ShowSysConf(ctx context.Context, request *pbs.EmptyRequest)
 }
 
 func (s *cmdService) SetLogLevel(ctx context.Context, request *pbs.LogLevel) (*pbs.CommonResponse, error) {
-	utils.SetModuleLogLevel(logging.Level(request.Level), request.Module)
-	return &pbs.CommonResponse{Msg: "success"}, nil
+	l := logging.Level(request.Level)
+	if request.Module == "all" {
+		for _, m := range utils.LogModules {
+			utils.SetModuleLogLevel(l, m)
+		}
+	} else {
+		utils.SetModuleLogLevel(l, request.Module)
+	}
+	return &pbs.CommonResponse{Msg: "success:" + l.String()}, nil
 }

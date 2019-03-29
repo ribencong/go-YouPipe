@@ -3,6 +3,7 @@ package thread
 import (
 	"context"
 	"fmt"
+	"github.com/op/go-logging"
 	"github.com/youpipe/go-youPipe/utils"
 	"sync"
 	"time"
@@ -18,7 +19,7 @@ var threadCounter = struct {
 	id:    1,
 	cache: make(map[int]interface{}),
 }
-var logger = utils.NewLog(utils.LMThread)
+var logger, _ = logging.GetLogger(utils.LMThread)
 
 type TimerThread struct {
 	sync.RWMutex
@@ -81,7 +82,7 @@ func ShowThreadInfos() string {
 		}
 	}
 
-	str += fmt.Sprintf("\n\n********************************************************")
+	str += fmt.Sprintf("\n\n********************************************************\n")
 	return str
 }
 
