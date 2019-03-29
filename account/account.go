@@ -107,24 +107,28 @@ func newNode() *Account {
 //}
 
 func (acc *Account) UnlockAcc(password string) bool {
+	fmt.Println("\n should remove this:->", password)
 
 	pk := ToPubKey(acc.NodeId)
 
 	aesKey, err := getAESKey(pk[:kp.S], password) //scrypt.Key([]byte(password), k.PubKey[:kp.S], kp.N, kp.R, kp.P, kp.L)
 	if err != nil {
-		logger.Warning("error to generate aes key:->", err)
+		fmt.Println("error to generate aes key:->", err)
 		return false
 	}
 
-	raw, err := Decrypt(aesKey, acc.Key.LockedKey)
+	cpTxt := make([]byte, len(acc.Key.LockedKey))
+	copy(cpTxt, acc.Key.LockedKey)
+
+	raw, err := Decrypt(aesKey, cpTxt)
 	if err != nil {
-		logger.Warning("Unlock raw private key:->", err)
+		fmt.Println("Unlock raw private key:->", err)
 		return false
 	}
 
 	tmpKey := curveKey(raw)
 	if !bytes.Equal(pk, tmpKey.pubKey[:]) {
-		logger.Warning("Unlock public failed")
+		fmt.Println("Unlock public failed")
 		return false
 	}
 	acc.Key.curve25519KeyPair = tmpKey

@@ -9,6 +9,7 @@ import (
 	"github.com/youpipe/go-youPipe/network"
 	"github.com/youpipe/go-youPipe/service"
 	"github.com/youpipe/go-youPipe/utils"
+	"golang.org/x/crypto/ssh/terminal"
 	"io/ioutil"
 	"os"
 	"os/signal"
@@ -95,6 +96,19 @@ func unlockMinerAccount() error {
 	if len(param.withMining) > 0 {
 		if ok := acc.UnlockAcc(param.withMining); !ok {
 			return fmt.Errorf("account password wrong")
+		} else {
+			logger.Info("Unlock miner account success!")
+			return nil
+		}
+	} else {
+		fmt.Println("******Please unlock miner account******")
+	TryAgain:
+		fmt.Print("password:")
+		bytePassword, _ := terminal.ReadPassword(0)
+
+		if ok := acc.UnlockAcc(string(bytePassword)); !ok {
+			fmt.Print("\n wrong! please try again\n")
+			goto TryAgain
 		}
 	}
 
