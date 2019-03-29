@@ -81,9 +81,7 @@ func (k *Key) fillPrivateKey(rawKey []byte) {
 
 func (k *Key) Lock() {
 	k.priKey = [KeyLen]byte{0}
-	k.pubKey = [KeyLen]byte{0}
 	k.eDPriKey = [ed25519.PrivateKeySize]byte{0}
-	k.eDPubKey = [ed25519.PublicKeySize]byte{0}
 }
 
 func (k *Key) Unlock(password string) bool {

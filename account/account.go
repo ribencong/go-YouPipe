@@ -43,6 +43,7 @@ func CreateAccount(password string) string {
 		panic(err)
 	}
 	defer key.Lock()
+
 	address := key.ToNodeId()
 	w := accData{
 		Version: utils.CurrentVersion,
@@ -79,18 +80,12 @@ func newNode() *Account {
 
 	path := utils.SysConf.AccDataPath
 	fil, err := os.Open(path)
-
 	if err != nil {
 		if !os.IsNotExist(err) {
 			panic(err)
 		}
-		if err := ioutil.WriteFile(path, []byte{}, 0644); err != nil {
-			panic(err)
-		}
-
 		return obj
 	}
-
 	defer fil.Close()
 
 	acc := &accData{}

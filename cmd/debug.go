@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"github.com/op/go-logging"
 	"github.com/spf13/cobra"
 	"github.com/youpipe/go-youPipe/core"
@@ -39,7 +40,7 @@ func debug(_ *cobra.Command, _ []string) {
 	client := DialToCmdService()
 
 	res, err := client.ShowNodeInfo(context.Background(), msg)
-	logger.Debugf("msg:%s, err:%v", res, err)
+	fmt.Printf("msg:%s, err:%v", res, err)
 }
 
 var gossipDebugCmd = &cobra.Command{
@@ -56,7 +57,7 @@ func gossipViews(_ *cobra.Command, _ []string) {
 	client := DialToCmdService()
 
 	res, _ := client.ShowGossipViews(context.Background(), msg)
-	logger.Debug(res.Msg)
+	fmt.Print(res.Msg)
 }
 
 var threadDebugCmd = &cobra.Command{
@@ -71,7 +72,7 @@ func threadShow(_ *cobra.Command, _ []string) {
 
 	client := DialToCmdService()
 	res, _ := client.ShowThreadInfos(context.Background(), msg)
-	logger.Debug(res.Msg)
+	fmt.Print(res.Msg)
 }
 
 var sysConfDebugCmd = &cobra.Command{
@@ -87,7 +88,7 @@ func sysConf(_ *cobra.Command, _ []string) {
 
 	client := DialToCmdService()
 	res, _ := client.ShowSysConf(context.Background(), msg)
-	logger.Debug(res.Msg)
+	fmt.Print(res.Msg)
 }
 
 var logDebugCmd = &cobra.Command{
@@ -113,7 +114,7 @@ func logLevel(_ *cobra.Command, args []string) {
 
 	client := DialToCmdService()
 	res, _ := client.SetLogLevel(context.Background(), msg)
-	logger.Debug(res.Msg)
+	fmt.Print(res.Msg)
 }
 
 /************************************************************************
