@@ -110,8 +110,6 @@ func newNode() *Account {
 //}
 
 func (acc *Account) UnlockAcc(password string) bool {
-	fmt.Println("\n should remove this:->", password)
-
 	pk := ToPubKey(acc.NodeId)
 
 	aesKey, err := getAESKey(pk[:kp.S], password) //scrypt.Key([]byte(password), k.PubKey[:kp.S], kp.N, kp.R, kp.P, kp.L)

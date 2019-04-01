@@ -33,11 +33,12 @@ func (v *ViewCache) Broadcast(data []byte) {
 	v.Lock()
 	defer v.Unlock()
 	for id, node := range v.pool {
-		logger.Debugf("(%s)broad cast msg to %s nodes", v.name, id)
+		//logger.Debugf("(%s)broad cast msg to %s nodes", v.name, id)
 		if err := node.send(data); err != nil {
 			delete(v.pool, id)
 		}
 	}
+	logger.Debugf("(%s)broad cast msg to %d nodes", v.name, len(v.pool))
 }
 
 func (v *ViewCache) Add(node *viewNode, nodeId string) bool {
@@ -260,7 +261,7 @@ func (v *ViewCache) GroupCast(ids []string, data []byte) {
 
 	for _, id := range ids {
 		if node, ok := v.pool[id]; ok {
-			node.send(data)
+			_ = node.send(data)
 		}
 	}
 }

@@ -150,7 +150,7 @@ func pullMsg(conn net.Conn) (pbs.MsgType, *pbs.Gossip, error) {
 
 	typ := pbs.MsgType(binary.BigEndian.Uint32(buf[:4]))
 	Len := int(binary.BigEndian.Uint32(buf[4:GspMsgHeadSize]))
-	logger.Debugf("gossip head typ=%s len=%d", typ, Len)
+	//logger.Debugf("gossip head typ=%s len=%d", typ, Len)
 
 	data := make([]byte, Len)
 	if _, err := io.ReadFull(conn, data); err != nil {
