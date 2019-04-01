@@ -125,14 +125,14 @@ func (acc *Account) UnlockAcc(password string) bool {
 		fmt.Println("Unlock raw private key:->", err)
 		return false
 	}
-
-	tmpKey := curveKey(raw)
-	if !bytes.Equal(pk, tmpKey.pubKey[:]) {
+	tmpPub, tmpPri := populateKey(raw)
+	if !bytes.Equal(pk, tmpPub[:]) {
 		fmt.Println("Unlock public failed")
 		return false
 	}
-	acc.Key.curve25519KeyPair = tmpKey
-	acc.Key.ed25519KeyPair = edKey(raw)
+
+	acc.Key.PubKey = tmpPub
+	acc.Key.priKey = tmpPri
 	return true
 }
 
