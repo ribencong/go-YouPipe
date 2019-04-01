@@ -87,9 +87,6 @@ func PrivateKeyToCurve25519(curve25519Private *[32]byte, privateKey *[64]byte) {
 }
 
 func edwardsToMontgomeryX(outX, y *edwards25519.FieldElement) {
-	// We only need the x-coordinate of the curve25519 point, which I'll
-	// call u. The isomorphism is u=(y+1)/(1-y), since y=Y/Z, this gives
-	// u=(Y+Z)/(Z-Y). We know that Z=1, thus u=(Y+1)/(1-Y).
 	var oneMinusY edwards25519.FieldElement
 	edwards25519.FeOne(&oneMinusY)
 	edwards25519.FeSub(&oneMinusY, &oneMinusY, y)
@@ -107,7 +104,6 @@ func PublicKeyToCurve25519(curve25519Public *[32]byte, publicKey *[32]byte) bool
 		return false
 	}
 
-	// A.Z = 1 as a postcondition of FromBytes.
 	var x edwards25519.FieldElement
 	edwardsToMontgomeryX(&x, &A.Y)
 	edwards25519.FeToBytes(curve25519Public, &x)

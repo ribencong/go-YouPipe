@@ -18,7 +18,7 @@ type Account struct {
 	Key    *Key
 }
 
-type accData struct {
+type SafeAccount struct {
 	Version string `json:"version"`
 	Address string `json:"address"`
 	Cipher  string `json:"cipher"`
@@ -38,18 +38,22 @@ func GetAccount() *Account {
 	return instance
 }
 
-func CreateAccount(password string) string {
+func CreateAccount(password string) SafeAccount {
 
 	key, err := GenerateKey(password)
 	if err != nil {
 		panic(err)
 	}
 	address := key.ToNodeId()
-	w := accData{
+	w := SafeAccount{
 		Version: utils.CurrentVersion,
 		Address: address,
 		Cipher:  base58.Encode(key.LockedKey),
 	}
+	return w
+}
+
+func SaveToDisk(w SafeAccount) {
 	data, err := json.Marshal(w)
 	if err != nil {
 		panic(err)
@@ -59,7 +63,6 @@ func CreateAccount(password string) string {
 	if err := ioutil.WriteFile(path, data, 0644); err != nil {
 		panic(err)
 	}
-	return address
 }
 
 func (acc *Account) IsEmpty() bool {
@@ -88,7 +91,7 @@ func newNode() *Account {
 	}
 	defer fil.Close()
 
-	acc := &accData{}
+	acc := &SafeAccount{}
 	parser := json.NewDecoder(fil)
 	if err = parser.Decode(acc); err != nil {
 		panic(err)

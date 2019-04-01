@@ -70,9 +70,10 @@ func createAccount(_ *cobra.Command, _ []string) {
 
 	core.InitYouPipeConf()
 
-	nodeId := account.CreateAccount(password)
+	acc := account.CreateAccount(password)
+	account.SaveToDisk(acc)
 
-	fmt.Printf("\nAccount(%s) create success!\n\n", nodeId)
+	fmt.Printf("\nAccount(%s) create success!\n\n", acc.Address)
 }
 
 func showAccount(_ *cobra.Command, _ []string) {
