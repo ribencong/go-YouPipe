@@ -2,12 +2,14 @@ package account
 
 import (
 	"bytes"
+	"golang.org/x/crypto/curve25519"
+	"golang.org/x/crypto/ed25519"
 	"testing"
 )
 
 var password = "12345678"
 var salt = []byte{0xc8, 0x28, 0xf2, 0x58, 0xa7, 0x6a, 0xad, 0x7b}
-var plainTxt = "hello word"
+var plainTxt = "Ed25519 is a public-key signature system with several attractive features:"
 
 func TestAesEncrypt(t *testing.T) {
 	aesKey, err := getAESKey(salt, password)
@@ -42,10 +44,10 @@ func TestNodeId(t *testing.T) {
 
 	printKey(t, key)
 	nid := key.ToNodeId()
-	t.Log("nid:", nid)
+	t.Log("nid:->", nid)
 
 	pub := ToPubKey(nid)
-	t.Log("pub", pub)
+	t.Log("pub:->", pub)
 
 	if !bytes.Equal(pub, key.PubKey[:]) {
 		t.Errorf("node id(%s)and public key (%s)"+
@@ -86,7 +88,93 @@ func TestGenerateKeyPair(t *testing.T) {
 }
 
 func printKey(t *testing.T, key *Key) {
-	t.Log("priKey:", key.priKey, "len", len(key.priKey))
-	t.Log("pubKey:", key.PubKey, "len", len(key.PubKey))
-	t.Log("LockedKey:", key.LockedKey, "len", len(key.LockedKey))
+	t.Log("priKey::->", key.priKey, "len", len(key.priKey))
+	t.Log("pubKey:->", key.PubKey, "len", len(key.PubKey))
+	t.Log("LockedKey:->", key.LockedKey, "len", len(key.LockedKey))
+}
+
+func TestSign(t *testing.T) {
+	key, err := GenerateKey(password)
+	if err != nil {
+		t.Error(err)
+	}
+
+	sign := ed25519.Sign(key.priKey, []byte(plainTxt))
+
+	t.Log("sing:->", sign)
+
+	tt := ed25519.Verify(key.PubKey, []byte(plainTxt), sign)
+	if !tt {
+		t.Error("verify failed:->")
+	}
+	tt2 := ed25519.Verify(key.PubKey, []byte("some failed message"), sign)
+	if tt2 {
+		t.Error("verify failed:->")
+	}
+}
+func TestConvert(t *testing.T) {
+	key, _ := GenerateKey(password)
+
+	var pubCC1 [32]byte
+	var publicKeyBytes [32]byte
+	copy(publicKeyBytes[:], key.PubKey)
+	tt := PublicKeyToCurve25519(&pubCC1, &publicKeyBytes)
+	t.Log("cc pub key :->", pubCC1)
+
+	if !tt {
+		t.Error("convert pub key to curve pub failed")
+	}
+
+	var priCC1 [32]byte
+	var priKeyBytes [64]byte
+	copy(priKeyBytes[:], key.priKey)
+	PrivateKeyToCurve25519(&priCC1, &priKeyBytes)
+	t.Log("cc private key :->", priCC1)
+
+	var pubCC2 [32]byte
+	curve25519.ScalarBaseMult(&pubCC2, &priCC1)
+	t.Log("cc2 pub key :->", pubCC1)
+
+	if pubCC2 != pubCC1 {
+		t.Error("convert ed curve to curve encrypt failed")
+	}
+
+}
+func TestCrypt(t *testing.T) {
+	key1, _ := GenerateKey(password)
+	printKey(t, key1)
+	key2, _ := GenerateKey(password)
+	printKey(t, key2)
+
+	var pubCC1 [32]byte
+	var publicKeyBytes [32]byte
+	copy(publicKeyBytes[:], key1.PubKey)
+	PublicKeyToCurve25519(&pubCC1, &publicKeyBytes)
+	var priCC1 [32]byte
+	var privateKeyBytes [64]byte
+	copy(privateKeyBytes[:], key1.priKey)
+	PrivateKeyToCurve25519(&priCC1, &privateKeyBytes)
+
+	var pubCC2 [32]byte
+	copy(publicKeyBytes[:], key2.PubKey)
+	PublicKeyToCurve25519(&pubCC2, &publicKeyBytes)
+	var priCC2 [32]byte
+	copy(privateKeyBytes[:], key2.priKey)
+	PrivateKeyToCurve25519(&priCC2, &privateKeyBytes)
+
+	var aesKey1 [32]byte
+	curve25519.ScalarMult(&aesKey1, &priCC1, &pubCC2)
+	t.Log("aeskey1:->", aesKey1)
+	t.Log("priCC1:->", priCC1)
+	t.Log("pubCC2:->", pubCC2)
+
+	var aesKey2 [32]byte
+	curve25519.ScalarMult(&aesKey2, &priCC2, &pubCC1)
+	t.Log("aesKey2:->", aesKey2)
+	t.Log("priCC2:->", priCC2)
+	t.Log("pubCC1:->", pubCC1)
+
+	if aesKey1 != aesKey2 {
+		t.Error("send aes key failed")
+	}
 }
