@@ -2,7 +2,6 @@ package core
 
 import (
 	"github.com/op/go-logging"
-	"github.com/youpipe/go-youPipe/account"
 	"github.com/youpipe/go-youPipe/gossip"
 	"github.com/youpipe/go-youPipe/service"
 	"github.com/youpipe/go-youPipe/utils"
@@ -16,7 +15,6 @@ var (
 )
 
 type YouPipeNode struct {
-	NodeId     string
 	ServeNode  *service.SNode
 	GossipNode *gossip.GNode
 }
@@ -32,12 +30,10 @@ func GetNodeInst() *YouPipeNode {
 func newNode() *YouPipeNode {
 
 	obj := &YouPipeNode{
-		NodeId:     account.GetAccount().NodeId,
 		GossipNode: gossip.GetGspNode(),
 		ServeNode:  service.GetSNode(),
 	}
 
-	obj.GossipNode.NodeID = obj.NodeId
 	obj.SetGspFilter()
 	return obj
 }

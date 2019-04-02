@@ -70,7 +70,7 @@ func TestGenerateKeyPair(t *testing.T) {
 	copy(pri, key.PriKey)
 
 	acc := &Account{
-		NodeId: key.ToNodeId(),
+		Address: key.ToNodeId(),
 		Key: &Key{
 			LockedKey: key.LockedKey,
 		},

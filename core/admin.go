@@ -22,7 +22,7 @@ func (n *YouPipeNode) AdminFindBootStrap(maxSize int32) ([]*pbs.BootNodes, error
 	}
 
 	conn, err := n.GossipNode.Dial(&gossip.GspAddr{
-		NodeId: n.NodeId,
+		NodeId: n.GossipNode.NodeID,
 		Type:   FindBootNode,
 	}, &gossip.GspAddr{
 		NodeId: gossip.BroadCastTarget,
@@ -74,7 +74,7 @@ func (n *YouPipeNode) adminShowMe(conn *gossip.GspConn, appMsg *pbs.AppMsg) erro
 	res := pbs.YouPipeMsg{
 		Typ: BootNodeAck,
 		Nodes: &pbs.BootNodes{
-			NodeId:  n.NodeId,
+			NodeId:  n.GossipNode.NodeID,
 			PeerIP:  n.GossipNode.VisibleIp,
 			PayLoad: int32(payLoad),
 		},

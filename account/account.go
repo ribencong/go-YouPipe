@@ -14,8 +14,8 @@ import (
 
 type Account struct {
 	sync.RWMutex
-	NodeId string
-	Key    *Key
+	Address string
+	Key     *Key
 }
 
 type SafeAccount struct {
@@ -66,14 +66,14 @@ func SaveToDisk(w SafeAccount) {
 }
 
 func (acc *Account) IsEmpty() bool {
-	return len(acc.NodeId) == 0
+	return len(acc.Address) == 0
 }
 
 func (acc *Account) FormatShow() string {
 	ret := fmt.Sprintf("\n**********************************************************************\n"+
 		"\tNodeID:\t%s"+
 		"\n**********************************************************************\n",
-		acc.NodeId)
+		acc.Address)
 
 	return ret
 }
@@ -97,7 +97,7 @@ func newNode() *Account {
 		panic(err)
 	}
 
-	obj.NodeId = acc.Address
+	obj.Address = acc.Address
 	obj.Key = &Key{
 		LockedKey: base58.Decode(acc.Cipher),
 	}
@@ -110,7 +110,7 @@ func newNode() *Account {
 //}
 
 func (acc *Account) UnlockAcc(password string) bool {
-	pk := ToPubKey(acc.NodeId)
+	pk := ToPubKey(acc.Address)
 
 	aesKey, err := AESKey(pk[:KP.S], password) //scrypt.Key([]byte(password), k.PubKey[:KP.S], KP.N, KP.R, KP.P, KP.L)
 	if err != nil {

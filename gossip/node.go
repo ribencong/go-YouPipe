@@ -3,6 +3,7 @@ package gossip
 import (
 	"fmt"
 	"github.com/op/go-logging"
+	"github.com/youpipe/go-youPipe/account"
 	"github.com/youpipe/go-youPipe/network"
 	"github.com/youpipe/go-youPipe/utils"
 	"net"
@@ -44,9 +45,9 @@ func newGossipNode() *GNode {
 	if err != nil {
 		panic(err)
 	}
-
 	logger.Infof("gossip server listening(%s)", l.Addr().String())
 	obj := &GNode{
+		NodeID:  account.GetAccount().Address,
 		server:  l,
 		timers:  make(TimerTask),
 		income:  newCache("IN"),

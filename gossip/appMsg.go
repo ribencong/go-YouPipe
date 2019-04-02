@@ -28,7 +28,7 @@ type GspAddr struct {
 //	}
 //
 //	return &GspAddr{
-//		NodeId: str[0],
+//		Address: str[0],
 //		Type:   int32(t),
 //	}, nil
 //}

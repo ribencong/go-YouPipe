@@ -72,10 +72,8 @@ func ConfigShow() string {
 		service.Config.String()+
 		gossip.Config.String()+
 		network.Config.String()+
-		"+NodeID:%49s+\n"+
 		"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++",
-		defaultYouPipeConf.CurrentVer,
-		GetNodeInst().NodeId)
+		defaultYouPipeConf.CurrentVer)
 }
 
 //TODO::
