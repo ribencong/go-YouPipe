@@ -47,7 +47,7 @@ func newGossipNode() *GNode {
 	}
 	logger.Infof("gossip server listening(%s)", l.Addr().String())
 	obj := &GNode{
-		NodeID:  account.GetAccount().Address,
+		NodeID:  string(account.GetAccount().Address),
 		server:  l,
 		timers:  make(TimerTask),
 		income:  newCache("IN"),

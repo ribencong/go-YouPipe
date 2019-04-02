@@ -14,7 +14,7 @@ import (
 
 type Account struct {
 	sync.RWMutex
-	Address string
+	Address ID
 	Key     *Key
 }
 
@@ -97,7 +97,7 @@ func newNode() *Account {
 		panic(err)
 	}
 
-	obj.Address = acc.Address
+	obj.Address = ID(acc.Address)
 	obj.Key = &Key{
 		LockedKey: base58.Decode(acc.Cipher),
 	}
@@ -110,7 +110,7 @@ func newNode() *Account {
 //}
 
 func (acc *Account) UnlockAcc(password string) bool {
-	pk := ToPubKey(acc.Address)
+	pk := acc.Address.ToPubKey()
 
 	aesKey, err := AESKey(pk[:KP.S], password) //scrypt.Key([]byte(password), k.PubKey[:KP.S], KP.N, KP.R, KP.P, KP.L)
 	if err != nil {
@@ -135,12 +135,4 @@ func (acc *Account) UnlockAcc(password string) bool {
 	acc.Key.PubKey = tmpPub
 	acc.Key.PriKey = tmpPri
 	return true
-}
-
-func ToPubKey(nid string) []byte {
-	if len(nid) <= len(AccPrefix) {
-		return nil
-	}
-	ss := nid[len(AccPrefix):]
-	return base58.Decode(ss)
 }

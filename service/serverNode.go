@@ -2,6 +2,8 @@ package service
 
 import (
 	"github.com/op/go-logging"
+	"github.com/youpipe/go-youPipe/account"
+	"github.com/youpipe/go-youPipe/network"
 	"github.com/youpipe/go-youPipe/utils"
 	"net"
 	"sync"
@@ -29,8 +31,10 @@ func GetSNode() *SNode {
 }
 
 func newServiceNode() *SNode {
+	id := account.GetAccount().Address
 
-	addr := Config.ServicePoint
+	addr := network.JoinHostPort(Config.ServiceIP, id.ToSocketPort())
+
 	l, err := net.Listen("tcp", addr)
 	if err != nil {
 		panic(err)

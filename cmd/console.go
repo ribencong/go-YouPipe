@@ -74,7 +74,7 @@ func initYouPipeConf() {
 	core.LoadYouPipeConf(param.confFile)
 
 	if len(param.server) != 0 {
-		service.Config.ServicePoint = param.server
+		service.Config.ServiceIP = param.server
 	}
 	if len(param.bootServer) != 0 {
 		network.Config.BootStrapServer = param.bootServer

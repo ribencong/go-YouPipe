@@ -1,6 +1,9 @@
 package network
 
-import "fmt"
+import (
+	"fmt"
+	"net"
+)
 
 const (
 	DefaultBootServer = "155.138.201.205"
@@ -17,4 +20,8 @@ type NetConf struct {
 func (conf NetConf) String() string {
 	return fmt.Sprintf("+%-15s:%40s+\n",
 		"BootStrapServer", conf.BootStrapServer)
+}
+
+func JoinHostPort(h string, p uint16) string {
+	return net.JoinHostPort(h, fmt.Sprintf("%d", p))
 }

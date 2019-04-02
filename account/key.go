@@ -9,10 +9,6 @@ import (
 	"golang.org/x/crypto/scrypt"
 )
 
-const (
-	AccPrefix = "YP"
-)
-
 var KP = struct {
 	S int
 	N int
