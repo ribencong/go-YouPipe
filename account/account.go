@@ -112,7 +112,7 @@ func newNode() *Account {
 func (acc *Account) UnlockAcc(password string) bool {
 	pk := ToPubKey(acc.NodeId)
 
-	aesKey, err := getAESKey(pk[:kp.S], password) //scrypt.Key([]byte(password), k.PubKey[:kp.S], kp.N, kp.R, kp.P, kp.L)
+	aesKey, err := AESKey(pk[:KP.S], password) //scrypt.Key([]byte(password), k.PubKey[:KP.S], KP.N, KP.R, KP.P, KP.L)
 	if err != nil {
 		fmt.Println("error to generate aes key:->", err)
 		return false
@@ -133,7 +133,7 @@ func (acc *Account) UnlockAcc(password string) bool {
 	}
 
 	acc.Key.PubKey = tmpPub
-	acc.Key.priKey = tmpPri
+	acc.Key.PriKey = tmpPri
 	return true
 }
 

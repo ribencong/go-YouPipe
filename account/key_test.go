@@ -12,7 +12,7 @@ var salt = []byte{0xc8, 0x28, 0xf2, 0x58, 0xa7, 0x6a, 0xad, 0x7b}
 var plainTxt = "Ed25519 is a public-key signature system with several attractive features:"
 
 func TestAesEncrypt(t *testing.T) {
-	aesKey, err := getAESKey(salt, password)
+	aesKey, err := AESKey(salt, password)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -66,8 +66,8 @@ func TestGenerateKeyPair(t *testing.T) {
 	pub := make([]byte, len(key.PubKey))
 	copy(pub, key.PubKey)
 
-	pri := make([]byte, len(key.priKey))
-	copy(pri, key.priKey)
+	pri := make([]byte, len(key.PriKey))
+	copy(pri, key.PriKey)
 
 	acc := &Account{
 		NodeId: key.ToNodeId(),
@@ -82,13 +82,13 @@ func TestGenerateKeyPair(t *testing.T) {
 		t.Error("public key is not equal", pub, key.PubKey)
 	}
 	//if !bytes.Equal(edpri, key.eDPriKey){
-	if !bytes.Equal(pri, acc.Key.priKey) {
-		t.Error("pri key is not equal", pri, key.priKey)
+	if !bytes.Equal(pri, acc.Key.PriKey) {
+		t.Error("pri key is not equal", pri, key.PriKey)
 	}
 }
 
 func printKey(t *testing.T, key *Key) {
-	t.Log("priKey::->", key.priKey, "len", len(key.priKey))
+	t.Log("PriKey::->", key.PriKey, "len", len(key.PriKey))
 	t.Log("pubKey:->", key.PubKey, "len", len(key.PubKey))
 	t.Log("LockedKey:->", key.LockedKey, "len", len(key.LockedKey))
 }
@@ -99,7 +99,7 @@ func TestSign(t *testing.T) {
 		t.Error(err)
 	}
 
-	sign := ed25519.Sign(key.priKey, []byte(plainTxt))
+	sign := ed25519.Sign(key.PriKey, []byte(plainTxt))
 
 	t.Log("sing:->", sign)
 
@@ -127,7 +127,7 @@ func TestConvert(t *testing.T) {
 
 	var priCC1 [32]byte
 	var priKeyBytes [64]byte
-	copy(priKeyBytes[:], key.priKey)
+	copy(priKeyBytes[:], key.PriKey)
 	PrivateKeyToCurve25519(&priCC1, &priKeyBytes)
 	t.Log("cc private key :->", priCC1)
 
@@ -152,14 +152,14 @@ func TestCrypt(t *testing.T) {
 	PublicKeyToCurve25519(&pubCC1, &publicKeyBytes)
 	var priCC1 [32]byte
 	var privateKeyBytes [64]byte
-	copy(privateKeyBytes[:], key1.priKey)
+	copy(privateKeyBytes[:], key1.PriKey)
 	PrivateKeyToCurve25519(&priCC1, &privateKeyBytes)
 
 	var pubCC2 [32]byte
 	copy(publicKeyBytes[:], key2.PubKey)
 	PublicKeyToCurve25519(&pubCC2, &publicKeyBytes)
 	var priCC2 [32]byte
-	copy(privateKeyBytes[:], key2.priKey)
+	copy(privateKeyBytes[:], key2.PriKey)
 	PrivateKeyToCurve25519(&priCC2, &privateKeyBytes)
 
 	var aesKey1 [32]byte

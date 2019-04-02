@@ -13,7 +13,7 @@ const (
 	AccPrefix = "YP"
 )
 
-var kp = struct {
+var KP = struct {
 	S int
 	N int
 	R int
@@ -28,13 +28,13 @@ var kp = struct {
 }
 
 type Key struct {
-	priKey    ed25519.PrivateKey
+	PriKey    ed25519.PrivateKey
 	PubKey    ed25519.PublicKey
 	LockedKey []byte
 }
 
-func getAESKey(salt []byte, password string) ([]byte, error) {
-	return scrypt.Key([]byte(password), salt, kp.N, kp.R, kp.P, kp.L)
+func AESKey(salt []byte, password string) ([]byte, error) {
+	return scrypt.Key([]byte(password), salt, KP.N, KP.R, KP.P, KP.L)
 }
 
 func GenerateKey(password string) (*Key, error) {
@@ -45,17 +45,17 @@ func GenerateKey(password string) (*Key, error) {
 	}
 
 	k := &Key{
-		priKey: pri,
+		PriKey: pri,
 		PubKey: pub,
 	}
 
-	aesKey, err := getAESKey(k.PubKey[:kp.S], password)
+	aesKey, err := AESKey(k.PubKey[:KP.S], password)
 	if err != nil {
 		logger.Warning("error to generate aes key:->", err)
 		return nil, err
 	}
 
-	k.LockedKey, err = Encrypt(aesKey, k.priKey[:])
+	k.LockedKey, err = Encrypt(aesKey, k.PriKey[:])
 	if err != nil {
 		logger.Warning("error to encrypt the raw private key:->", err)
 		return nil, err
