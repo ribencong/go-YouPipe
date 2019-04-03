@@ -52,6 +52,7 @@ func (cw *connWaiter) DebugInfo() string {
 }
 
 func (cw *connWaiter) Run(ctx context.Context) {
+
 	if err := cw.handShake(); err != nil {
 		logger.Warningf("failed to parse socks5 request:->%v", err)
 		return
@@ -63,7 +64,7 @@ func (cw *connWaiter) Run(ctx context.Context) {
 		return
 	}
 
-	pipe := user.addNewPipe(cw, cw.Target)
+	pipe := user.addNewPipe(cw.Conn, cw.Target, cw.IsRaw)
 	if pipe == nil {
 		logger.Warning("create new pipe failed:->")
 		return
