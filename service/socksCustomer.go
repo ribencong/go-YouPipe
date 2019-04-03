@@ -56,14 +56,19 @@ func (cu *customer) addNewPipe(l net.Conn, target string) *Pipe {
 		logger.Warningf("failed to connect target:->%v", err)
 		return nil
 	}
-
 	r.(*net.TCPConn).SetKeepAlive(true)
-	logger.Infof("proxy %s <-> %s", l.RemoteAddr().String(), target)
+
+	sl, err := Shadow(l, cu.aesKey)
+	if err != nil {
+		logger.Warning("shadow the incoming conn err:->", err)
+		return nil
+	}
 
 	p := &Pipe{
-		left:  l,
+		left:  sl,
 		right: r,
 	}
+
 	cu.Lock()
 	defer cu.Unlock()
 

@@ -61,11 +61,11 @@ func GenerateKey(password string) (*Key, error) {
 	return k, nil
 }
 
-func (k Key) ToNodeId() ID {
+func (k *Key) ToNodeId() ID {
 	return ID(AccPrefix + base58.Encode(k.PubKey[:]))
 }
 
-func (k Key) GenerateAesKey(aesKey *[32]byte, peerPub []byte) {
+func (k *Key) GenerateAesKey(aesKey *[32]byte, peerPub []byte) {
 
 	var priKey [32]byte
 	var privateKeyBytes [64]byte

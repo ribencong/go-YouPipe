@@ -88,7 +88,7 @@ func TestGenerateKeyPair(t *testing.T) {
 }
 
 func printKey(t *testing.T, key *Key) {
-	t.Log("PriKey::->", key.PriKey, "len", len(key.PriKey))
+	t.Log("priKey::->", key.PriKey, "len", len(key.PriKey))
 	t.Log("pubKey:->", key.PubKey, "len", len(key.PubKey))
 	t.Log("LockedKey:->", key.LockedKey, "len", len(key.LockedKey))
 }
