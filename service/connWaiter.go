@@ -4,28 +4,25 @@ import (
 	"context"
 	"fmt"
 	"github.com/golang/protobuf/proto"
+	"github.com/youpipe/go-youPipe/account"
 	"github.com/youpipe/go-youPipe/pbs"
 	"github.com/youpipe/go-youPipe/thread"
-	"io"
 	"net"
-	"time"
 )
 
 type connWaiter struct {
-	*customer
+	*pbs.Sock5Req
 	net.Conn
 	*SNode
 }
 
 func (node *SNode) newWaiter(conn net.Conn) *thread.Thread {
-	rAddr := conn.RemoteAddr().String()
+	conn.(*net.TCPConn).SetKeepAlive(true)
 
+	rAddr := conn.RemoteAddr().String()
 	w := &connWaiter{
 		Conn:  conn,
 		SNode: node,
-		customer: &customer{
-			remoteAddr: rAddr,
-		},
 	}
 
 	t := thread.NewThreadWithName(w, rAddr)
@@ -34,95 +31,98 @@ func (node *SNode) newWaiter(conn net.Conn) *thread.Thread {
 }
 
 func (cw *connWaiter) CloseCallBack(t *thread.Thread) {
+	cw.Close()
+
+	if u := cw.getCustomer(cw.Address); u != nil {
+		u.removePipe(cw.Target)
+
+		if u.isPipeEmpty() {
+			cw.removeUser(cw.Address)
+		}
+	}
 }
 
 func (cw *connWaiter) DebugInfo() string {
 	return fmt.Sprintf("\n||||||||||||||||||||||||||||||||||||||||||||||||\n"+
-		"|%s|\n"+
+		//"|%s|\n"+
 		"|%-15s:%30s|\n"+
 		"||||||||||||||||||||||||||||||||||||||||||||||||",
-		cw.accountId,
-		"remoteIP", cw.remoteAddr)
+		//cw.RemoteAddr().String(),
+		"remoteIP", cw.RemoteAddr().String())
 }
 
 func (cw *connWaiter) Run(ctx context.Context) {
-
-	defer cw.Close()
-	cw.Conn.(*net.TCPConn).SetKeepAlive(true)
-
-	addr, err := handShake(cw)
-	if err != nil {
-		logger.Warningf("failed to read address:->%v", err)
+	if err := cw.handShake(); err != nil {
+		logger.Warningf("failed to parse socks5 request:->%v", err)
 		return
 	}
 
-	remoteConn, err := net.Dial("tcp", addr)
-	if err != nil {
-		logger.Warningf("failed to connect target:->%v", err)
+	user := cw.getOrCreateCustomer(cw.Address)
+	if nil == user {
+		logger.Warning("get customer info err:->", cw.Target, cw.Address)
 		return
 	}
-	defer remoteConn.Close()
 
-	remoteConn.(*net.TCPConn).SetKeepAlive(true)
-	logger.Infof("proxy %s <-> %s", cw.remoteAddr, addr)
-
-	_, _, err = relay(cw, remoteConn)
-	if err != nil {
-		if err, ok := err.(net.Error); ok && err.Timeout() {
-			return // ignore i/o timeout
-		}
-		logger.Warningf("relay error: %v", err)
+	pipe := user.addNewPipe(cw, cw.Target)
+	if pipe == nil {
+		logger.Warning("create new pipe failed:->")
+		return
 	}
+	go pipe.pull()
+
+	pipe.push()
+
+	logger.Warning("pipe(up=%d, down=%d) is broken err=%v:->", pipe.up, pipe.down, pipe.err)
 }
 
-func handShake(conn net.Conn) (string, error) {
-	buffer := make([]byte, MaxAddrLen)
-	n, err := conn.Read(buffer)
+func (cw *connWaiter) handShake() error {
+	buffer := make([]byte, buffSize)
+	n, err := cw.Read(buffer)
 	if err != nil {
 		logger.Warningf("failed to read address:->%v", err)
-		return "", err
+		return err
 	}
 
-	addr := &pbs.Sock5Addr{}
-	if err := proto.Unmarshal(buffer[:n], addr); err != nil {
+	sockReq := &pbs.Sock5Req{}
+	if err := proto.Unmarshal(buffer[:n], sockReq); err != nil {
 		logger.Warningf("unmarshal address:->%v", err)
-		return "", err
+		return err
 	}
-
-	res, _ := proto.Marshal(&pbs.CommAck{
-		ErrNo:  pbs.ErrorNo_Success,
-		ErrMsg: "success",
+	myId := account.GetAccount().Address
+	res, _ := proto.Marshal(&pbs.Sock5Res{
+		Address: string(myId),
 	})
 
-	if _, err := conn.Write(res); err != nil {
+	if _, err := cw.Write(res); err != nil {
 		logger.Warningf("write response err :->%v", err)
-		return "", err
+		return err
 	}
+	cw.Sock5Req = sockReq
 
-	return net.JoinHostPort(addr.Host, addr.Port), nil
+	return nil
 }
 
-func relay(left, right net.Conn) (int64, int64, error) {
-	type res struct {
-		N   int64
-		Err error
-	}
-	ch := make(chan res)
-
-	go func() {
-		n, err := io.Copy(right, left)
-		right.SetDeadline(time.Now()) // wake up the other goroutine blocking on right
-		left.SetDeadline(time.Now())  // wake up the other goroutine blocking on left
-		ch <- res{n, err}
-	}()
-
-	n, err := io.Copy(left, right)
-	right.SetDeadline(time.Now()) // wake up the other goroutine blocking on right
-	left.SetDeadline(time.Now())  // wake up the other goroutine blocking on left
-	rs := <-ch
-
-	if err == nil {
-		err = rs.Err
-	}
-	return n, rs.N, err
-}
+//func relay(left, right net.Conn) (int64, int64, error) {
+//	type res struct {
+//		N   int64
+//		Err error
+//	}
+//	ch := make(chan res)
+//
+//	go func() {
+//		n, err := io.Copy(right, left)
+//		right.SetDeadline(time.Now()) // wake up the other goroutine blocking on right
+//		left.SetDeadline(time.Now())  // wake up the other goroutine blocking on left
+//		ch <- res{n, err}
+//	}()
+//
+//	n, err := io.Copy(left, right)
+//	right.SetDeadline(time.Now()) // wake up the other goroutine blocking on right
+//	left.SetDeadline(time.Now())  // wake up the other goroutine blocking on left
+//	rs := <-ch
+//
+//	if err == nil {
+//		err = rs.Err
+//	}
+//	return n, rs.N, err
+//}

@@ -15,11 +15,10 @@ var (
 	logger, _ = logging.GetLogger(utils.LMService)
 )
 
-const MaxAddrLen = 1 + 1 + 255 + 2
-
 type SNode struct {
 	sync.RWMutex
 	serviceConn net.Listener
+	users       map[string]*customer
 }
 
 func GetSNode() *SNode {
@@ -44,6 +43,7 @@ func newServiceNode() *SNode {
 
 	node := &SNode{
 		serviceConn: l,
+		users:       make(map[string]*customer),
 	}
 
 	return node
@@ -55,10 +55,42 @@ func (node *SNode) Mining() {
 	for {
 		conn, err := node.serviceConn.Accept()
 		if err != nil {
-			logger.Warningf("failed to accept :->%v", err)
-			continue
+			panic(err)
+			return
 		}
 
 		node.newWaiter(conn).Start()
 	}
+}
+
+func (node *SNode) getOrCreateCustomer(peerId string) *customer {
+	node.Lock()
+	defer node.Unlock()
+	if u, ok := node.users[peerId]; ok {
+		return u
+	}
+
+	user := &customer{
+		address: peerId,
+		pipes:   make(map[string]*Pipe),
+	}
+
+	if err := account.GetAccount().CreateAesKey(&user.aesKey, peerId); err != nil {
+		return nil
+	}
+
+	node.users[peerId] = user
+	return user
+}
+
+func (node *SNode) getCustomer(peerId string) *customer {
+	node.RLock()
+	defer node.RUnlock()
+	return node.users[peerId]
+}
+
+func (node *SNode) removeUser(peerId string) {
+	node.Lock()
+	defer node.Unlock()
+	delete(node.users, peerId)
 }

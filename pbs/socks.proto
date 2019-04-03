@@ -6,13 +6,12 @@ enum errorNo{
     Success = 0;
 }
 
-message sock5Addr{
-    int32 aType = 1;
-    string host = 2;
-    string port = 3;
+message Sock5Req{
+    string ver      = 1;
+    string address  = 2;
+    string target   = 3;
 }
 
-message commAck{
-    errorNo errNo       = 1;
-    string errMsg       = 2;
+message Sock5Res{
+    string address  = 1;
 }

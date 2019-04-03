@@ -46,7 +46,7 @@ func TestNodeId(t *testing.T) {
 	nid := key.ToNodeId()
 	t.Log("nid:->", nid)
 
-	pub := ToPubKey(nid)
+	pub := nid.ToPubKey()
 	t.Log("pub:->", pub)
 
 	if !bytes.Equal(pub, key.PubKey[:]) {
@@ -138,7 +138,6 @@ func TestConvert(t *testing.T) {
 	if pubCC2 != pubCC1 {
 		t.Error("convert ed curve to curve encrypt failed")
 	}
-
 }
 func TestCrypt(t *testing.T) {
 	key1, _ := GenerateKey(password)

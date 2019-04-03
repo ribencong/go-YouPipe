@@ -20,7 +20,7 @@ type Account struct {
 
 type SafeAccount struct {
 	Version string `json:"version"`
-	Address string `json:"address"`
+	Address ID     `json:"address"`
 	Cipher  string `json:"cipher"`
 }
 
@@ -97,7 +97,7 @@ func newNode() *Account {
 		panic(err)
 	}
 
-	obj.Address = ID(acc.Address)
+	obj.Address = acc.Address
 	obj.Key = &Key{
 		LockedKey: base58.Decode(acc.Cipher),
 	}
@@ -135,4 +135,18 @@ func (acc *Account) UnlockAcc(password string) bool {
 	acc.Key.PubKey = tmpPub
 	acc.Key.PriKey = tmpPri
 	return true
+}
+
+func (acc *Account) CreateAesKey(key *[32]byte, peerAddr string) error {
+
+	id, err := ConvertToID(peerAddr)
+	if err != nil {
+		return err
+	}
+
+	peerPub := id.ToPubKey()
+
+	acc.Key.GenerateAesKey(key, peerPub)
+
+	return nil
 }

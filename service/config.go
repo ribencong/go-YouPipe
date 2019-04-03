@@ -3,6 +3,7 @@ package service
 import "fmt"
 
 const (
+	buffSize         = 1 << 15
 	SocksServerPoint = "0.0.0.0"
 )
 
