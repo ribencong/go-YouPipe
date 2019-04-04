@@ -27,7 +27,7 @@ func (node *SNode) newWaiter(conn net.Conn) *thread.Thread {
 	}
 
 	t := thread.NewThreadWithName(w, rAddr)
-	logger.Debugf("new customer(%s) come in :->", t.Name)
+	logger.Debugf("new customer(%s) coming.", t.Name)
 	return t
 }
 
@@ -63,7 +63,7 @@ func (cw *connWaiter) Run(ctx context.Context) {
 		logger.Warningf("failed to parse socks5 request:->%v", err)
 		return
 	}
-
+	logger.Debug("get request:", req)
 	user := cw.getOrCreateCustomer(req.Address)
 	if nil == user {
 		logger.Warning("get customer info err:->", req)
@@ -83,7 +83,7 @@ func (cw *connWaiter) Run(ctx context.Context) {
 
 	pipe.push()
 
-	logger.Warningf("pipe(up=%d, down=%d) is broken err=%v:->", pipe.up, pipe.down, pipe.err)
+	logger.Warningf("pipe(%s) is broken(up=%d, down=%d) err=%v:", pipe.PipeID, pipe.up, pipe.down, pipe.err)
 }
 
 func (cw *connWaiter) handShake() (*pbs.Sock5Req, error) {
