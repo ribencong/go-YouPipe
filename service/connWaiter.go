@@ -11,7 +11,7 @@ import (
 )
 
 type connWaiter struct {
-	*pbs.Sock5Req
+	request *pbs.Sock5Req
 	net.Conn
 	*SNode
 }
@@ -26,18 +26,21 @@ func (node *SNode) newWaiter(conn net.Conn) *thread.Thread {
 	}
 
 	t := thread.NewThreadWithName(w, rAddr)
-	logger.Debugf("new customer come in :->", t.Name)
+	logger.Debugf("new customer(%s) come in :->", t.Name)
 	return t
 }
 
 func (cw *connWaiter) CloseCallBack(t *thread.Thread) {
 	cw.Close()
+	if cw.request == nil {
+		return
+	}
 
-	if u := cw.getCustomer(cw.Address); u != nil {
-		u.removePipe(cw.Target)
+	if u := cw.getCustomer(cw.request.Address); u != nil {
+		u.removePipe(cw.request.Target)
 
 		if u.isPipeEmpty() {
-			cw.removeUser(cw.Address)
+			cw.removeUser(cw.request.Address)
 		}
 	}
 }
@@ -58,19 +61,19 @@ func (cw *connWaiter) Run(ctx context.Context) {
 		return
 	}
 
-	user := cw.getOrCreateCustomer(cw.Address)
+	user := cw.getOrCreateCustomer(cw.request.Address)
 	if nil == user {
-		logger.Warning("get customer info err:->", cw.Target, cw.Address)
+		logger.Warning("get customer info err:->", cw.request)
 		return
 	}
 
-	pipe := user.addNewPipe(cw.Conn, cw.Target, cw.IsRaw)
+	pipe := user.addNewPipe(cw.Conn, cw.request.Target, cw.request.IsRaw)
 	if pipe == nil {
 		logger.Warning("create new pipe failed:->")
 		return
 	}
 
-	logger.Infof("proxy %s <-> %s", cw.RemoteAddr().String(), cw.Target)
+	logger.Infof("proxy %s <-> %s", cw.RemoteAddr().String(), cw.request.Target)
 
 	go pipe.pull()
 
@@ -101,7 +104,7 @@ func (cw *connWaiter) handShake() error {
 		logger.Warningf("write response err :->%v", err)
 		return err
 	}
-	cw.Sock5Req = sockReq
+	cw.request = sockReq
 
 	return nil
 }
