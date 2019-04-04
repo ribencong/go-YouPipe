@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/op/go-logging"
+	"github.com/youpipe/go-youPipe/account"
 	"github.com/youpipe/go-youPipe/gossip"
 	"github.com/youpipe/go-youPipe/network"
 	"github.com/youpipe/go-youPipe/service"
@@ -72,8 +73,10 @@ func ConfigShow() string {
 		service.Config.String()+
 		gossip.Config.String()+
 		network.Config.String()+
+		"+%-15s:%40s+\n"+
 		"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++",
-		defaultYouPipeConf.CurrentVer)
+		defaultYouPipeConf.CurrentVer,
+		"CurrentAccount", account.GetAccount().Address)
 }
 
 //TODO::

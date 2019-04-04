@@ -84,5 +84,5 @@ func showAccount(_ *cobra.Command, _ []string) {
 	}
 
 	strShow := account.GetAccount().FormatShow()
-	logger.Info(strShow)
+	fmt.Println(strShow)
 }
