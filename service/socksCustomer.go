@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"io"
 	"net"
 	"sync"
@@ -8,11 +9,12 @@ import (
 )
 
 type Pipe struct {
-	err   error
-	up    int64
-	down  int64
-	left  net.Conn
-	right net.Conn
+	PipeID string
+	err    error
+	up     int64
+	down   int64
+	left   net.Conn
+	right  net.Conn
 }
 
 func (p *Pipe) pull() {
@@ -43,6 +45,16 @@ func (p *Pipe) close() {
 	p.right.Close()
 }
 
+func newPipe(l, r net.Conn) *Pipe {
+	pid := fmt.Sprintf("%s<->%s", l.RemoteAddr().String(), r.RemoteAddr().String())
+	p := &Pipe{
+		PipeID: pid,
+		left:   l,
+		right:  r,
+	}
+	return p
+}
+
 type customer struct {
 	sync.RWMutex
 	address string
@@ -66,34 +78,31 @@ func (cu *customer) addNewPipe(l net.Conn, target string, raw bool) *Pipe {
 		}
 	}
 
-	p := &Pipe{
-		left:  l,
-		right: r,
-	}
-
+	p := newPipe(l, r)
 	cu.Lock()
 	defer cu.Unlock()
 
-	if _, ok := cu.pipes[target]; ok {
+	if _, ok := cu.pipes[p.PipeID]; ok {
+		logger.Errorf("duplicate target:%s", p.PipeID)
 		panic("this logic is wrong")
 	}
 
-	cu.pipes[target] = p
+	cu.pipes[p.PipeID] = p
 	return p
 }
 
-func (cu *customer) removePipe(target string) {
+func (cu *customer) removePipe(pid string) {
 
 	cu.Lock()
 	defer cu.Unlock()
 
-	u, ok := cu.pipes[target]
+	u, ok := cu.pipes[pid]
 	if !ok {
-		logger.Warning("no such pipe to remove:->", target)
+		logger.Warning("no such pipe to remove:->", pid)
 		return
 	}
 	u.close()
-	delete(cu.pipes, target)
+	delete(cu.pipes, pid)
 }
 
 func (cu *customer) isPipeEmpty() bool {

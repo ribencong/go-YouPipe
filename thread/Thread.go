@@ -77,9 +77,9 @@ func (t *Thread) Start() {
 		t.IsOk = true
 		t.Unlock()
 
-		logger.Infof("Thread (%d, %s) start", t.ID, t.Name)
+		logger.Debugf("Thread (%d, %s) start", t.ID, t.Name)
 		t.r.Run(t.ctx)
-		logger.Infof("Thread (%d, %s) exit", t.ID, t.Name)
+		logger.Debugf("Thread (%d, %s) exit", t.ID, t.Name)
 
 		t.Lock()
 		t.IsOk = false

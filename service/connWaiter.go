@@ -11,7 +11,8 @@ import (
 )
 
 type connWaiter struct {
-	request *pbs.Sock5Req
+	customerId string
+	pipeId     string
 	net.Conn
 	*SNode
 }
@@ -32,15 +33,16 @@ func (node *SNode) newWaiter(conn net.Conn) *thread.Thread {
 
 func (cw *connWaiter) CloseCallBack(t *thread.Thread) {
 	cw.Close()
-	if cw.request == nil {
+	if len(cw.customerId) == 0 {
 		return
 	}
 
-	if u := cw.getCustomer(cw.request.Address); u != nil {
-		u.removePipe(cw.request.Target)
+	if u := cw.getCustomer(cw.customerId); u != nil {
+
+		u.removePipe(cw.pipeId)
 
 		if u.isPipeEmpty() {
-			cw.removeUser(cw.request.Address)
+			cw.removeUser(cw.customerId)
 		}
 	}
 }
@@ -56,44 +58,46 @@ func (cw *connWaiter) DebugInfo() string {
 
 func (cw *connWaiter) Run(ctx context.Context) {
 
-	if err := cw.handShake(); err != nil {
+	req, err := cw.handShake()
+	if err != nil {
 		logger.Warningf("failed to parse socks5 request:->%v", err)
 		return
 	}
 
-	user := cw.getOrCreateCustomer(cw.request.Address)
+	user := cw.getOrCreateCustomer(req.Address)
 	if nil == user {
-		logger.Warning("get customer info err:->", cw.request)
+		logger.Warning("get customer info err:->", req)
 		return
 	}
 
-	pipe := user.addNewPipe(cw.Conn, cw.request.Target, cw.request.IsRaw)
+	pipe := user.addNewPipe(cw.Conn, req.Target, req.IsRaw)
 	if pipe == nil {
 		logger.Warning("create new pipe failed:->")
 		return
 	}
+	cw.pipeId = pipe.PipeID
 
-	logger.Infof("proxy %s <-> %s", cw.RemoteAddr().String(), cw.request.Target)
+	logger.Debugf("proxy %s <-> %s", cw.RemoteAddr().String(), req.Target)
 
 	go pipe.pull()
 
 	pipe.push()
 
-	logger.Warning("pipe(up=%d, down=%d) is broken err=%v:->", pipe.up, pipe.down, pipe.err)
+	logger.Warningf("pipe(up=%d, down=%d) is broken err=%v:->", pipe.up, pipe.down, pipe.err)
 }
 
-func (cw *connWaiter) handShake() error {
+func (cw *connWaiter) handShake() (*pbs.Sock5Req, error) {
 	buffer := make([]byte, buffSize)
 	n, err := cw.Read(buffer)
 	if err != nil {
 		logger.Warningf("failed to read address:->%v", err)
-		return err
+		return nil, err
 	}
 
 	sockReq := &pbs.Sock5Req{}
 	if err := proto.Unmarshal(buffer[:n], sockReq); err != nil {
 		logger.Warningf("unmarshal address:->%v", err)
-		return err
+		return nil, err
 	}
 	myId := account.GetAccount().Address
 	res, _ := proto.Marshal(&pbs.Sock5Res{
@@ -102,9 +106,8 @@ func (cw *connWaiter) handShake() error {
 
 	if _, err := cw.Write(res); err != nil {
 		logger.Warningf("write response err :->%v", err)
-		return err
+		return nil, err
 	}
-	cw.request = sockReq
-
-	return nil
+	cw.customerId = sockReq.Address
+	return sockReq, nil
 }
