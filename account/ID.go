@@ -8,7 +8,6 @@ import (
 
 const (
 	AccPrefix       = "YP"
-	AccIDLen        = 46
 	SocketPortInit  = 50000
 	SocketPortRange = 15000
 )
@@ -39,9 +38,9 @@ func ConvertToID(addr string) (ID, error) {
 	if addr[:len(AccPrefix)] != AccPrefix {
 		return "", EInvalidPre
 	}
-	if len(addr) != AccIDLen {
-		return "", EInvalidLen
-	}
+	//if len(addr) != AccIDLen {
+	//	return "", EInvalidLen
+	//}
 
 	return ID(addr), nil
 }
