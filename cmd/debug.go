@@ -114,7 +114,7 @@ func logLevel(_ *cobra.Command, args []string) {
 
 	client := DialToCmdService()
 	res, _ := client.SetLogLevel(context.Background(), msg)
-	fmt.Print(res.Msg)
+	fmt.Println(res.Msg)
 }
 
 /************************************************************************

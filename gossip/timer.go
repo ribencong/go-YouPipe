@@ -31,10 +31,10 @@ func (n *GNode) isolateCheck() {
 		return
 	}
 
-	logger.Warning("no input view nodes")
+	logger.Info("no input view nodes")
 
 	if n.outPut.IsEmpty() {
-		logger.Warning("I'm stand alone.....")
+		logger.Info("I'm stand alone.....")
 		n.subscribe()
 		return
 	}

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/btcsuite/btcutil/base58"
 	"github.com/spf13/cobra"
 	"github.com/youpipe/go-youPipe/account"
 	"github.com/youpipe/go-youPipe/utils"
@@ -45,6 +46,6 @@ func createKey(_ *cobra.Command, _ []string) {
 	if bareKey {
 		fmt.Printf(" private key:[%0x]\n public key:[%0x]\n", k.PriKey, k.PubKey)
 	} else {
-		fmt.Printf(" cipher:[%0x]\n address:[%s]\n", k.LockedKey, k.ToNodeId())
+		fmt.Printf(" cipher:[%s]\n address:[%s]\n", base58.Encode(k.LockedKey), k.ToNodeId())
 	}
 }
