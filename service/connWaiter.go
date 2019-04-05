@@ -83,7 +83,7 @@ func (cw *connWaiter) Run(ctx context.Context) {
 
 	pipe.push()
 
-	logger.Warningf("pipe(%s) is broken(up=%d, down=%d) err=%v:", pipe.PipeID, pipe.up, pipe.down, pipe.err)
+	logger.Infof("pipe(%s) is broken(up=%d, down=%d) err=%v:", pipe.PipeID, pipe.up, pipe.down, pipe.err)
 }
 
 func (cw *connWaiter) handShake() (*pbs.Sock5Req, error) {

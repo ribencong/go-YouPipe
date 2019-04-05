@@ -146,7 +146,5 @@ func (acc *Account) CreateAesKey(key *[32]byte, peerAddr string) error {
 
 	peerPub := id.ToPubKey()
 
-	acc.Key.GenerateAesKey(key, peerPub)
-
-	return nil
+	return acc.Key.GenerateAesKey(key, peerPub)
 }

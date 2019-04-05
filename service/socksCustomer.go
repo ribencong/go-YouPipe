@@ -43,6 +43,7 @@ func (p *Pipe) expire(err error) {
 
 func (p *Pipe) close() {
 	p.right.Close()
+	logger.Debugf("pipe(%s) closing", p.PipeID)
 }
 
 func newPipe(l, r net.Conn) *Pipe {
@@ -96,13 +97,14 @@ func (cu *customer) removePipe(pid string) {
 	cu.Lock()
 	defer cu.Unlock()
 
-	u, ok := cu.pipes[pid]
+	p, ok := cu.pipes[pid]
 	if !ok {
 		logger.Warning("no such pipe to remove:->", pid)
 		return
 	}
-	u.close()
+	p.close()
 	delete(cu.pipes, pid)
+	logger.Debugf("remove pipe(%s) from user(%s)", p.PipeID, cu.address)
 }
 
 func (cu *customer) isPipeEmpty() bool {

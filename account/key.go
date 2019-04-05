@@ -3,6 +3,7 @@ package account
 import (
 	"crypto/rand"
 	"crypto/sha512"
+	"fmt"
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/youpipe/go-youPipe/account/edwards25519"
 	"golang.org/x/crypto/curve25519"
@@ -23,6 +24,9 @@ var KP = struct {
 	P: 1,
 	L: 32,
 }
+var (
+	EConvertCurvePubKey = fmt.Errorf("convert ed25519 public key to curve25519 public key failed")
+)
 
 type Key struct {
 	PriKey    ed25519.PrivateKey
@@ -65,16 +69,20 @@ func (k *Key) ToNodeId() ID {
 	return ID(AccPrefix + base58.Encode(k.PubKey[:]))
 }
 
-func (k *Key) GenerateAesKey(aesKey *[32]byte, peerPub []byte) {
+func (k *Key) GenerateAesKey(aesKey *[32]byte, peerPub []byte) error {
 
 	var priKey [32]byte
 	var privateKeyBytes [64]byte
 	copy(privateKeyBytes[:], k.PriKey)
-
 	PrivateKeyToCurve25519(&priKey, &privateKeyBytes)
-	var pubKey [32]byte
+
+	var curvePub, pubKey [32]byte
 	copy(pubKey[:], peerPub)
-	curve25519.ScalarMult(aesKey, &priKey, &pubKey)
+	if ok := PublicKeyToCurve25519(&curvePub, &pubKey); !ok {
+		return EConvertCurvePubKey
+	}
+	curve25519.ScalarMult(aesKey, &priKey, &curvePub)
+	return nil
 }
 
 func populateKey(data []byte) (ed25519.PublicKey, ed25519.PrivateKey) {

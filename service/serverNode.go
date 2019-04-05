@@ -93,4 +93,6 @@ func (node *SNode) removeUser(peerId string) {
 	node.Lock()
 	defer node.Unlock()
 	delete(node.users, peerId)
+	logger.Debugf("remove user(%s)", peerId)
+
 }
