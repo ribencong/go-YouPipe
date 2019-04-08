@@ -26,6 +26,10 @@ func (id ID) ToSocketPort() uint16 {
 	return uint16(SocketPortInit + sum%SocketPortRange)
 }
 
+func (id ID) ToString() string {
+	return string(id)
+}
+
 func (id ID) ToPubKey() []byte {
 	if len(id) <= len(AccPrefix) {
 		return nil
