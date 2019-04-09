@@ -70,7 +70,7 @@ func (cw *connWaiter) Run(ctx context.Context) {
 		return
 	}
 
-	pipe := user.addNewPipe(cw.Conn, req.Target, req.IsRaw)
+	pipe := user.addNewPipe(cw.Conn, req.Target)
 	if pipe == nil {
 		logger.Warning("create new pipe failed:->")
 		return

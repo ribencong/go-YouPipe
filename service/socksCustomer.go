@@ -63,7 +63,7 @@ type customer struct {
 	pipes   map[string]*Pipe
 }
 
-func (cu *customer) addNewPipe(l net.Conn, target string, raw bool) *Pipe {
+func (cu *customer) addNewPipe(l net.Conn, target string) *Pipe {
 	r, err := net.Dial("tcp", target)
 	if err != nil {
 		logger.Warningf("failed to connect target:->%v", err)
@@ -71,7 +71,7 @@ func (cu *customer) addNewPipe(l net.Conn, target string, raw bool) *Pipe {
 	}
 	r.(*net.TCPConn).SetKeepAlive(true)
 
-	if raw == false {
+	if debugConn == false {
 		l, err = Shadow(l, cu.aesKey)
 		if err != nil {
 			logger.Warning("shadow the incoming conn err:->", err)

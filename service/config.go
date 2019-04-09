@@ -3,6 +3,7 @@ package service
 import "fmt"
 
 const (
+	debugConn        = false
 	buffSize         = 1 << 15
 	DefaultKingKey   = "YP5rttHPzRsAe2RmF52sLzbBk4jpoPwJLtABaMv6qn7kVm"
 	SocksServerPoint = "0.0.0.0"
