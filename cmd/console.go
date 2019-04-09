@@ -38,6 +38,7 @@ var param struct {
 	server     string
 	bootServer string
 	withMining string
+	kingKey    string
 }
 
 func init() {
@@ -56,6 +57,9 @@ func init() {
 	rootCmd.Flags().StringVarP(&param.withMining, "mine",
 		"m", "", "Start server with mining function -m [PASSWORD] "+
 			"will unlock your account and mine YPC")
+
+	rootCmd.Flags().StringVarP(&param.kingKey, "kingKey",
+		"k", "", "king's ID")
 
 	rootCmd.Flags().BoolVarP(&param.debug, "debug",
 		"d", false, "run in debug model")
@@ -79,12 +83,20 @@ func initYouPipeConf() {
 	if len(param.bootServer) != 0 {
 		network.Config.BootStrapServer = param.bootServer
 	}
+	if len(param.kingKey) != 0 {
+		if account.CheckID(param.kingKey) {
+			service.Config.KingKey = param.kingKey
+		} else {
+			fmt.Println("king's key is invalid")
+		}
+	}
+
 	if param.debug {
 		utils.SysDebugMode = true
 		utils.SystemLogLevel = logging.DEBUG
 	}
 	utils.ApplyLogLevel()
-	logger.Info(core.ConfigShow())
+	fmt.Println(core.ConfigShow())
 }
 
 func unlockMinerAccount() error {
@@ -97,7 +109,7 @@ func unlockMinerAccount() error {
 		if ok := acc.UnlockAcc(param.withMining); !ok {
 			return fmt.Errorf("account password wrong")
 		} else {
-			logger.Info("Unlock miner account success!")
+			fmt.Println("Unlock miner account success!")
 			return nil
 		}
 	} else {
@@ -142,7 +154,7 @@ func mainRun(_ *cobra.Command, _ []string) {
 func waitSignal(done chan bool) {
 
 	pid := strconv.Itoa(os.Getpid())
-	logger.Warningf("\n>>>>>>>>>>YouPipe node start at pid(%s)<<<<<<<<<<", pid)
+	fmt.Printf("\n>>>>>>>>>>YouPipe node start at pid(%s)<<<<<<<<<<\n", pid)
 	if err := ioutil.WriteFile(utils.SysConf.PidPath, []byte(pid), 0644); err != nil {
 		fmt.Print("failed to write running pid", err)
 	}
@@ -153,7 +165,7 @@ func waitSignal(done chan bool) {
 	sig := <-sigCh
 
 	core.GetNodeInst().Destroy()
-	logger.Warningf("\n>>>>>>>>>>process finished(%s)<<<<<<<<<<\n", sig)
+	fmt.Printf("\n>>>>>>>>>>process finished(%s)<<<<<<<<<<\n", sig)
 
 	done <- true
 }

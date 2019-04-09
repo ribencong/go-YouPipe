@@ -7,6 +7,7 @@ import (
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/op/go-logging"
 	"github.com/youpipe/go-youPipe/utils"
+	"gx/ipfs/QmW7VUmSvhvSGbYbdsh7uRjhGmsYkc9fL8aJ5CorxxrU5N/go-crypto/ed25519"
 	"io/ioutil"
 	"os"
 	"sync"
@@ -147,4 +148,18 @@ func (acc *Account) CreateAesKey(key *[32]byte, peerAddr string) error {
 	peerPub := id.ToPubKey()
 
 	return acc.Key.GenerateAesKey(key, peerPub)
+}
+
+func CheckID(address string) bool {
+	if len(address) <= len(AccPrefix) {
+		return false
+	}
+
+	id := ID(address)
+	pk := id.ToPubKey()
+	if len(pk) != ed25519.PublicKeySize {
+		return false
+	}
+
+	return true
 }

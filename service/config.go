@@ -4,14 +4,17 @@ import "fmt"
 
 const (
 	buffSize         = 1 << 15
+	DefaultKingKey   = "YP5rttHPzRsAe2RmF52sLzbBk4jpoPwJLtABaMv6qn7kVm"
 	SocksServerPoint = "0.0.0.0"
 )
 
 var Config = SrvConf{
+	KingKey:   DefaultKingKey,
 	ServiceIP: SocksServerPoint,
 }
 
 type SrvConf struct {
+	KingKey   string `json:"kingKey"`
 	ServiceIP string `json:"accessPoint"`
 }
 
