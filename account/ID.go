@@ -3,11 +3,13 @@ package account
 import (
 	"fmt"
 	"github.com/btcsuite/btcutil/base58"
+	"golang.org/x/crypto/ed25519"
 	"hash/fnv"
 )
 
 const (
 	AccPrefix       = "YP"
+	AccIDLen        = 40
 	SocketPortInit  = 50000
 	SocketPortRange = 15000
 )
@@ -36,6 +38,19 @@ func (id ID) ToPubKey() []byte {
 	}
 	ss := string(id[len(AccPrefix):])
 	return base58.Decode(ss)
+}
+
+func (id ID) IsValid() bool {
+	if len(id) <= AccIDLen {
+		return false
+	}
+	if id[:len(AccPrefix)] != AccPrefix {
+		return false
+	}
+	if len(id.ToPubKey()) != ed25519.PublicKeySize {
+		return false
+	}
+	return true
 }
 
 func ConvertToID(addr string) (ID, error) {
