@@ -64,7 +64,7 @@ func (cw *connWaiter) Run(ctx context.Context) {
 		return
 	}
 	logger.Debug("get request:", req)
-	user := cw.getOrCreateCustomer(req.Address)
+	user := cw.getCustomer(req.Address)
 	if nil == user {
 		logger.Warning("get customer info err:->", req)
 		return
@@ -89,6 +89,7 @@ func (cw *connWaiter) Run(ctx context.Context) {
 func (cw *connWaiter) handShake() (*pbs.Sock5Req, error) {
 	buffer := make([]byte, buffSize)
 	n, err := cw.Read(buffer)
+
 	if err != nil {
 		logger.Warningf("failed to read address:->%v", err)
 		return nil, err
@@ -99,15 +100,23 @@ func (cw *connWaiter) handShake() (*pbs.Sock5Req, error) {
 		logger.Warningf("unmarshal address:->%v", err)
 		return nil, err
 	}
+
 	myId := account.GetAccount().Address
-	res, _ := proto.Marshal(&pbs.Sock5Res{
+	res, err := proto.Marshal(&pbs.Sock5Res{
 		Address: string(myId),
 	})
+
+	if err != nil {
+		logger.Warning("marshal socks5 response to %s err:%v",
+			sockReq.Address, err)
+		return nil, err
+	}
 
 	if _, err := cw.Write(res); err != nil {
 		logger.Warningf("write response err :->%v", err)
 		return nil, err
 	}
+
 	cw.customerId = sockReq.Address
 	return sockReq, nil
 }

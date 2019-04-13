@@ -58,7 +58,9 @@ func newPipe(l, r net.Conn) *Pipe {
 
 type customer struct {
 	sync.RWMutex
+	net.Conn
 	address string
+	license *LicenseContent
 	aesKey  [32]byte
 	pipes   map[string]*Pipe
 }
@@ -109,4 +111,7 @@ func (cu *customer) removePipe(pid string) {
 
 func (cu *customer) isPipeEmpty() bool {
 	return len(cu.pipes) == 0
+}
+func (cu *customer) StartProvePay() {
+
 }
