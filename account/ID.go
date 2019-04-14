@@ -15,8 +15,7 @@ const (
 )
 
 var (
-	EInvalidPre = fmt.Errorf("invalid ID prefix")
-	EInvalidLen = fmt.Errorf("invalid ID length")
+	EInvalidID = fmt.Errorf("invalid ID")
 )
 
 type ID string
@@ -32,7 +31,7 @@ func (id ID) ToString() string {
 	return string(id)
 }
 
-func (id ID) ToPubKey() []byte {
+func (id ID) ToPubKey() ed25519.PublicKey {
 	if len(id) <= len(AccPrefix) {
 		return nil
 	}
@@ -54,12 +53,9 @@ func (id ID) IsValid() bool {
 }
 
 func ConvertToID(addr string) (ID, error) {
-	if addr[:len(AccPrefix)] != AccPrefix {
-		return "", EInvalidPre
+	id := ID(addr)
+	if id.IsValid() {
+		return id, nil
 	}
-	//if len(addr) != AccIDLen {
-	//	return "", EInvalidLen
-	//}
-
-	return ID(addr), nil
+	return "", EInvalidID
 }
