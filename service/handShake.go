@@ -8,12 +8,12 @@ import (
 )
 
 type HandShakeData struct {
-	addr   string
-	target string
+	Addr   string
+	Target string
 }
 type HandShake struct {
-	ver string
-	sig []byte
+	Ver string
+	Sig []byte
 	*HandShakeData
 }
 
@@ -23,14 +23,35 @@ func (s *HandShake) check() bool {
 		return false
 	}
 
-	pid, err := account.ConvertToID(s.addr)
+	pid, err := account.ConvertToID(s.Addr)
 	if err != nil {
 		return false
 	}
-	return ed25519.Verify(pid.ToPubKey(), msg, s.sig)
+	return ed25519.Verify(pid.ToPubKey(), msg, s.Sig)
 }
 
-func (node *SNode) handShake(conn *ctrlConn) {
+func NewHandReq(addr, target string, key ed25519.PrivateKey) *HandShake {
+	reqData := &HandShakeData{
+		Addr:   addr,
+		Target: target,
+	}
+
+	data, err := json.Marshal(reqData)
+	if err != nil {
+		logger.Error("marshal hand shake data err:->", err)
+		return nil
+	}
+
+	sig := ed25519.Sign(key, data)
+	req := &HandShake{
+		Sig:           sig,
+		HandShakeData: reqData,
+	}
+
+	return req
+}
+
+func (node *SNode) handShake(conn *CtrlConn) {
 
 	pipe, err := readServiceReq(conn, node)
 	if err != nil {
@@ -44,9 +65,9 @@ func (node *SNode) handShake(conn *ctrlConn) {
 	pipe.push()
 }
 
-func readServiceReq(conn *ctrlConn, node *SNode) (pipe *Pipe, err error) {
+func readServiceReq(conn *CtrlConn, node *SNode) (pipe *Pipe, err error) {
 	req := &HandShake{}
-	if err = conn.readMsg(req); err != nil {
+	if err = conn.ReadMsg(req); err != nil {
 		return nil, err
 	}
 	if req.check() {
@@ -54,13 +75,13 @@ func readServiceReq(conn *ctrlConn, node *SNode) (pipe *Pipe, err error) {
 		return nil, err
 	}
 
-	cu := node.getCustomer(req.addr)
+	cu := node.getCustomer(req.Addr)
 	if cu == nil {
 		err = fmt.Errorf("micropayment channel isn't open")
 		return nil, err
 	}
 
-	pipe, err = cu.pipeMng.addNewPipe(conn, req.target)
+	pipe, err = cu.pipeMng.addNewPipe(conn, req.Target)
 	if err != nil {
 		return nil, err
 	}

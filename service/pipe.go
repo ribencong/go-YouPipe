@@ -36,7 +36,7 @@ func newAdmin(peerAddr string) *PipeAdmin {
 func (a *PipeAdmin) addNewPipe(l net.Conn, target string) (*Pipe, error) {
 	r, err := net.Dial("tcp", target)
 	if err != nil {
-		err = fmt.Errorf("failed to connect target %v", err)
+		err = fmt.Errorf("failed to connect Target %v", err)
 		return nil, err
 	}
 	if err := r.(*net.TCPConn).SetKeepAlive(true); err != nil {
@@ -54,7 +54,7 @@ func (a *PipeAdmin) addNewPipe(l net.Conn, target string) (*Pipe, error) {
 	defer a.Unlock()
 
 	if _, ok := a.pipes[p.PipeID]; ok {
-		err = fmt.Errorf("duplicate target:%s", p.PipeID)
+		err = fmt.Errorf("duplicate Target:%s", p.PipeID)
 		return nil, err
 	}
 

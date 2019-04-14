@@ -32,11 +32,11 @@ type ACK struct {
 	Message string
 }
 
-type ctrlConn struct {
+type CtrlConn struct {
 	net.Conn
 }
 
-func (conn ctrlConn) readMsg(v interface{}) error {
+func (conn *CtrlConn) ReadMsg(v interface{}) error {
 	buffer := make([]byte, buffSize)
 	n, err := conn.Read(buffer)
 	if err != nil {
@@ -51,7 +51,7 @@ func (conn ctrlConn) readMsg(v interface{}) error {
 	return nil
 }
 
-func (conn ctrlConn) writeAck(err error) {
+func (conn *CtrlConn) writeAck(err error) {
 	var data []byte
 	if err == nil {
 		data, _ = json.Marshal(&ACK{

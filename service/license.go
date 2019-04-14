@@ -40,9 +40,9 @@ func (l *License) check() bool {
 	return false
 }
 
-func initCustomer(conn *ctrlConn, node *SNode) (*customer, error) {
+func initCustomer(conn *CtrlConn, node *SNode) (*customer, error) {
 	l := &License{}
-	if err := conn.readMsg(l); err != nil {
+	if err := conn.ReadMsg(l); err != nil {
 		return nil, err
 	}
 

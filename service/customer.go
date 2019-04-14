@@ -12,7 +12,7 @@ type customer struct {
 	payChannel *thread.Thread
 }
 
-func (node *SNode) newCustomer(conn *ctrlConn) {
+func (node *SNode) newCustomer(conn *CtrlConn) {
 	user, err := initCustomer(conn, node)
 
 	if err != nil {

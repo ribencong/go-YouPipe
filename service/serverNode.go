@@ -66,7 +66,7 @@ func (node *SNode) OpenPaymentChannel() {
 		if err != nil {
 			panic(err)
 		}
-		c := &ctrlConn{conn}
+		c := &CtrlConn{conn}
 		go node.newCustomer(c)
 	}
 }
@@ -79,7 +79,7 @@ func (node *SNode) Mining() {
 		if err != nil {
 			panic(err)
 		}
-		c := &ctrlConn{conn}
+		c := &CtrlConn{conn}
 		go node.handShake(c)
 	}
 }
