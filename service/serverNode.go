@@ -1,7 +1,6 @@
 package service
 
 import (
-	"encoding/json"
 	"github.com/op/go-logging"
 	"github.com/youpipe/go-youPipe/account"
 	"github.com/youpipe/go-youPipe/network"
@@ -15,26 +14,6 @@ var (
 	once      sync.Once
 	logger, _ = logging.GetLogger(utils.LMService)
 )
-
-type ACK struct {
-	Success bool
-	Message string
-}
-
-func sealACK(err error) []byte {
-	if err == nil {
-		data, _ := json.Marshal(&ACK{
-			Success: true,
-			Message: "Success",
-		})
-		return data
-	}
-	data, _ := json.Marshal(&ACK{
-		Success: false,
-		Message: err.Error(),
-	})
-	return data
-}
 
 type SNode struct {
 	sync.RWMutex
@@ -87,8 +66,8 @@ func (node *SNode) OpenPaymentChannel() {
 		if err != nil {
 			panic(err)
 		}
-
-		go node.newCustomer(conn)
+		c := &ctrlConn{conn}
+		go node.newCustomer(c)
 	}
 }
 
@@ -100,8 +79,8 @@ func (node *SNode) Mining() {
 		if err != nil {
 			panic(err)
 		}
-
-		go node.handShake(conn)
+		c := &ctrlConn{conn}
+		go node.handShake(c)
 	}
 }
 

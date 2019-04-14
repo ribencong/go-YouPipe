@@ -1,9 +1,7 @@
 package service
 
 import (
-	"github.com/youpipe/go-youPipe/account"
 	"github.com/youpipe/go-youPipe/thread"
-	"net"
 )
 
 type customer struct {
@@ -14,30 +12,15 @@ type customer struct {
 	payChannel *thread.Thread
 }
 
-func (node *SNode) newCustomer(conn net.Conn) {
+func (node *SNode) newCustomer(conn *ctrlConn) {
+	user, err := initCustomer(conn, node)
 
-	defer conn.Close()
-
-	license, err := getValidLicense(conn, node)
 	if err != nil {
 		logger.Warning(err.Error())
+		conn.writeAck(err)
+		conn.Close()
 		return
 	}
-
-	peerAddr := license.UserAddr
-	user := &customer{
-		address:    peerAddr,
-		license:    license,
-		pipeMng:    newAdmin(),
-		payChannel: newMicroPayment(conn),
-	}
-
-	if err := account.GetAccount().CreateAesKey(&user.pipeMng.aesKey, peerAddr); err != nil {
-		logger.Error("Aes key error when create customer", err)
-		return
-	}
-
-	node.addCustomer(peerAddr, user)
 
 	user.working()
 
@@ -45,7 +28,7 @@ func (node *SNode) newCustomer(conn net.Conn) {
 
 	user.destroy()
 
-	node.removeUser(peerAddr)
+	node.removeUser(user.address)
 }
 
 func (c *customer) working() {

@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"github.com/youpipe/go-youPipe/account"
 	"io"
 	"net"
 	"sync"
@@ -20,11 +21,15 @@ func (a *PipeAdmin) IsEmpty() bool {
 	return len(a.pipes) == 0
 }
 
-func newAdmin() *PipeAdmin {
-
+func newAdmin(peerAddr string) *PipeAdmin {
 	admin := &PipeAdmin{
 		pipes: make(map[string]*Pipe),
 	}
+	if err := account.GetAccount().CreateAesKey(&admin.aesKey, peerAddr); err != nil {
+		logger.Errorf("create pipe admin's aes key err:->", err)
+		return nil
+	}
+
 	return admin
 }
 

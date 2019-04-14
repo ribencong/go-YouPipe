@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/youpipe/go-youPipe/account"
 	"golang.org/x/crypto/ed25519"
-	"net"
 )
 
 type HandShakeData struct {
@@ -31,46 +30,37 @@ func (s *HandShake) check() bool {
 	return ed25519.Verify(pid.ToPubKey(), msg, s.sig)
 }
 
-func (node *SNode) handShake(conn net.Conn) {
+func (node *SNode) handShake(conn *ctrlConn) {
 
 	pipe, err := readServiceReq(conn, node)
 	if err != nil {
+		conn.writeAck(err)
 		conn.Close()
 		return
 	}
+
 	go pipe.pull()
+
 	pipe.push()
 }
 
-func readServiceReq(conn net.Conn, node *SNode) (*Pipe, error) {
-	var err error
-	defer conn.Write(sealACK(err))
-
-	buffer := make([]byte, buffSize)
-	n, err := conn.Read(buffer)
-	if err != nil {
-		err = fmt.Errorf("failed to read address:->%v", err)
+func readServiceReq(conn *ctrlConn, node *SNode) (pipe *Pipe, err error) {
+	req := &HandShake{}
+	if err = conn.readMsg(req); err != nil {
 		return nil, err
 	}
-
-	sockReq := &HandShake{}
-	if err = json.Unmarshal(buffer[:n], sockReq); err != nil {
-		err = fmt.Errorf("unmarshal address:->%v", err)
-		return nil, err
-	}
-
-	if sockReq.check() {
+	if req.check() {
 		err = fmt.Errorf("signature invalid")
 		return nil, err
 	}
 
-	cu := node.getCustomer(sockReq.addr)
+	cu := node.getCustomer(req.addr)
 	if cu == nil {
 		err = fmt.Errorf("micropayment channel isn't open")
 		return nil, err
 	}
 
-	pipe, err := cu.pipeMng.addNewPipe(conn, sockReq.target)
+	pipe, err = cu.pipeMng.addNewPipe(conn, req.target)
 	if err != nil {
 		return nil, err
 	}

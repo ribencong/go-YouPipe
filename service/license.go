@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/youpipe/go-youPipe/account"
 	"golang.org/x/crypto/ed25519"
-	"net"
 	"time"
 )
 
@@ -28,42 +27,48 @@ func (l *License) check() bool {
 		return false
 	}
 
-	return ed25519.Verify(KingFinger.ToPubKey(), msg, l.Signature)
+	if ok := ed25519.Verify(KingFinger.ToPubKey(), msg, l.Signature); !ok {
+		logger.Warning("signature check failed")
+		return false
+	}
+	now := time.Now()
+	if now.Before(l.StartDate) || now.After(l.EndDate) {
+		logger.Warning("license time invalid(%s)", l.UserAddr)
+		return false
+	}
+
+	return false
 }
 
-func getValidLicense(conn net.Conn, node *SNode) (*License, error) {
-	var err error
-	defer conn.Write(sealACK(err))
-
-	buff := make([]byte, buffSize)
-	n, err := conn.Read(buff)
-	if err != nil {
-		err = fmt.Errorf("payment channel open err:%v", err)
+func initCustomer(conn *ctrlConn, node *SNode) (*customer, error) {
+	l := &License{}
+	if err := conn.readMsg(l); err != nil {
 		return nil, err
 	}
 
-	l := &License{}
-	if err = json.Unmarshal(buff[:n], l); err != nil {
-		err = fmt.Errorf("payment channel read data err:%v", err)
-		return nil, err
+	if !l.check() {
+		return nil, fmt.Errorf("signature failed err:%s", l.UserAddr)
 	}
 
 	peerAddr := l.UserAddr
-	if !l.check() {
-		err = fmt.Errorf("signature failed err")
-		return nil, err
+	cu := node.getCustomer(peerAddr)
+
+	if cu == nil {
+		admin := newAdmin(peerAddr)
+		if admin == nil {
+			return nil, fmt.Errorf("aes key error when create customer%s", peerAddr)
+		}
+
+		cu = &customer{
+			address:    peerAddr,
+			license:    l,
+			pipeMng:    admin,
+			payChannel: newMicroPayment(conn),
+		}
+
+		node.addCustomer(peerAddr, cu)
 	}
 
-	now := time.Now()
-	if now.Before(l.StartDate) || now.After(l.EndDate) {
-		err = fmt.Errorf("license time invalid(%s)", peerAddr)
-		return nil, err
-	}
-
-	if u := node.getCustomer(peerAddr); u != nil {
-		err = fmt.Errorf("duplicate customer server (%s)", peerAddr)
-		return nil, err
-	}
-
-	return l, nil
+	conn.writeAck(nil)
+	return cu, nil
 }
