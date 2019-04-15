@@ -9,31 +9,17 @@ import (
 	"time"
 )
 
-type PipeAdmin struct {
-	sync.RWMutex
-	aesKey PipeCryptKey
-	pipes  map[string]*Pipe
+type PipeReqData struct {
+	Addr   string
+	Target string
 }
 
-func (a *PipeAdmin) IsEmpty() bool {
-	a.RLock()
-	defer a.RUnlock()
-	return len(a.pipes) == 0
+type PipeRequest struct {
+	Sig []byte
+	*PipeReqData
 }
 
-func newAdmin(peerAddr string) *PipeAdmin {
-	admin := &PipeAdmin{
-		pipes: make(map[string]*Pipe),
-	}
-	if err := account.GetAccount().CreateAesKey((*[32]byte)(&admin.aesKey), peerAddr); err != nil {
-		logger.Errorf("create pipe admin's aes key err:->", err)
-		return nil
-	}
-
-	return admin
-}
-
-func (a *PipeAdmin) addNewPipe(l net.Conn, target string) (*Pipe, error) {
+func (a *PipeAdmin) addNewPipe(l net.Conn, target string) (*RightPipe, error) {
 	r, err := net.Dial("tcp", target)
 	if err != nil {
 		err = fmt.Errorf("failed to connect Target %v", err)
@@ -77,7 +63,7 @@ func (a *PipeAdmin) removePipe(pid string) {
 	logger.Debugf("remove pipe(%s)", p.PipeID)
 }
 
-type Pipe struct {
+type RightPipe struct {
 	PipeID string
 	err    error
 	up     int64
@@ -86,19 +72,19 @@ type Pipe struct {
 	right  net.Conn
 }
 
-func (p *Pipe) pullFromServer() {
+func (p *RightPipe) pullFromServer() {
 	n, err := io.Copy(p.right, p.left)
 	p.up = n
 	p.expire(err)
 }
 
-func (p *Pipe) pushBackToClient() {
+func (p *RightPipe) pushBackToClient() {
 	n, err := io.Copy(p.left, p.right)
 	p.down = n
 	p.expire(err)
 }
 
-func (p *Pipe) expire(err error) {
+func (p *RightPipe) expire(err error) {
 	p.right.SetDeadline(time.Now())
 	p.left.SetDeadline(time.Now())
 	if err == nil {
@@ -110,14 +96,14 @@ func (p *Pipe) expire(err error) {
 	}
 }
 
-func (p *Pipe) close() {
+func (p *RightPipe) close() {
 	p.right.Close()
 	logger.Debugf("pipe(%s) closing", p.PipeID)
 }
 
-func newPipe(l, r net.Conn) *Pipe {
+func newPipe(l, r net.Conn) *RightPipe {
 	pid := fmt.Sprintf("%s<->%s", l.RemoteAddr().String(), r.RemoteAddr().String())
-	p := &Pipe{
+	p := &RightPipe{
 		PipeID: pid,
 		left:   l,
 		right:  r,

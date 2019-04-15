@@ -34,7 +34,6 @@ func (l *License) Verify() error {
 	now := time.Now()
 	if now.Before(l.StartDate) || now.After(l.EndDate) {
 		return fmt.Errorf("license time invalid(%s)", l.UserAddr)
-
 	}
 
 	return nil
@@ -49,40 +48,4 @@ func ParseLicense(data string) (*License, error) {
 		return nil, err
 	}
 	return l, nil
-}
-
-func initCustomer(conn *JsonConn, node *PipeMiner) (cu *service, err error) {
-	l := &License{}
-	if err = conn.ReadJsonMsg(l); err != nil {
-		return nil, err
-	}
-
-	peerAddr := l.UserAddr
-	if err = l.Verify(); err != nil {
-		goto ACK
-	}
-
-	cu = node.getCustomer(peerAddr)
-	if cu == nil {
-		admin := newAdmin(peerAddr)
-		if admin == nil {
-			return nil, fmt.Errorf("aes key error when create service%s", peerAddr)
-		}
-
-		cu = &service{
-			address:    peerAddr,
-			license:    l,
-			pipeMng:    admin,
-			payChannel: newMicroPayment(conn),
-		}
-
-		node.addCustomer(peerAddr, cu)
-	} else {
-		//TODO::
-		//ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
-	}
-
-ACK:
-	conn.writeAck(err)
-	return
 }

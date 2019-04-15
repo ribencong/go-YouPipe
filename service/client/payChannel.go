@@ -9,10 +9,10 @@ import (
 )
 
 type PayChannel struct {
-	peerID account.ID
-	PriKey ed25519.PrivateKey
-	conn   *service.JsonConn
-	done   chan error
+	minerID account.ID
+	priKey  ed25519.PrivateKey
+	conn    *service.JsonConn
+	done    chan error
 	sync.RWMutex
 	totalUsed int64
 	unSigned  int64
@@ -28,7 +28,7 @@ func (p *PayChannel) payMonitor() {
 			return
 		}
 
-		proof, err := p.Sign(bill)
+		proof, err := p.signBill(bill)
 		if err != nil {
 			p.done <- err
 			return
@@ -41,9 +41,9 @@ func (p *PayChannel) payMonitor() {
 	}
 }
 
-func (p *PayChannel) Sign(bill *service.PipeBill) (*service.PipeProof, error) {
+func (p *PayChannel) signBill(bill *service.PipeBill) (*service.PipeProof, error) {
 
-	if ok := bill.Verify(p.peerID); ok {
+	if ok := bill.Verify(p.minerID); ok {
 		return nil, fmt.Errorf("miner's signature failed")
 	}
 
@@ -58,7 +58,7 @@ func (p *PayChannel) Sign(bill *service.PipeBill) (*service.PipeProof, error) {
 		PipeBill: bill,
 	}
 
-	if err := proof.Sign(p.PriKey); err != nil {
+	if err := proof.Sign(p.priKey); err != nil {
 		return nil, err
 	}
 
@@ -67,7 +67,7 @@ func (p *PayChannel) Sign(bill *service.PipeBill) (*service.PipeProof, error) {
 	return proof, nil
 }
 
-func (p *PayChannel) CalculateConsumed(n int) {
+func (p *PayChannel) consume(n int) {
 	p.Lock()
 	defer p.Unlock()
 	p.unSigned += int64(n)

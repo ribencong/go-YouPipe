@@ -16,7 +16,6 @@ func (c *Client) Proxying() {
 		return
 	}
 	go c.consume(conn)
-
 }
 
 func (c *Client) consume(conn net.Conn) {
@@ -31,8 +30,8 @@ func (c *Client) consume(conn net.Conn) {
 	}
 	fmt.Println("target info:->", obj.target)
 
-	port := c.selectedService.minerAddr.ToSocketPort()
-	addr := network.JoinHostPort(c.selectedService.minerIP, port)
+	port := c.curService.minerAddr.ToServerPort()
+	addr := network.JoinHostPort(c.curService.minerIP, port)
 	rConn, err := net.Dial("tcp", addr)
 
 	if err != nil {
@@ -52,7 +51,7 @@ func (c *Client) consume(conn net.Conn) {
 		fmt.Println("write hand shake data err:->", err)
 		return
 	}
-	ack := &service.ACK{}
+	ack := &service.YouPipeACK{}
 	if err := consumeConn.ReadJsonMsg(ack); err != nil {
 		fmt.Printf("failed to read miner's response :->%v", err)
 		return
@@ -69,8 +68,8 @@ func (c *Client) consume(conn net.Conn) {
 	pipe.pullDataFromServer()
 }
 
-func (c *Client) NewHandReq(target string) *service.HandShake {
-	reqData := &service.HandShakeData{
+func (c *Client) NewHandReq(target string) *service.YPHandShake {
+	reqData := &service.PipeReqData{
 		Addr:   c.Address.ToString(),
 		Target: target,
 	}
@@ -82,9 +81,9 @@ func (c *Client) NewHandReq(target string) *service.HandShake {
 	}
 
 	sig := ed25519.Sign(c.Key.PriKey, data)
-	req := &service.HandShake{
-		Sig:           sig,
-		HandShakeData: reqData,
+	req := &service.YPHandShake{
+		Sig:         sig,
+		PipeReqData: reqData,
 	}
 
 	return req

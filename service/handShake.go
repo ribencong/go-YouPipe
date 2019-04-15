@@ -5,20 +5,32 @@ import (
 	"fmt"
 	"github.com/youpipe/go-youPipe/account"
 	"golang.org/x/crypto/ed25519"
+	"net"
 )
 
-type HandShakeData struct {
-	Addr   string
-	Target string
-}
-type HandShake struct {
-	Ver string
-	Sig []byte
-	*HandShakeData
+type PipeCmd int
+
+const (
+	_ PipeCmd = iota
+	CmdPayChanel
+	CmdPipe
+	CmdCheck
+)
+
+type YouPipeACK struct {
+	Success bool
+	Message string
 }
 
-func (s *HandShake) check() bool {
-	msg, err := json.Marshal(s.HandShakeData)
+type YPHandShake struct {
+	CmdType PipeCmd
+	Sig     []byte
+	*PipeReqData
+	*LicenseData
+}
+
+func (s *PipeRequest) check() bool {
+	msg, err := json.Marshal(s.PipeReqData)
 	if err != nil {
 		return false
 	}
@@ -30,25 +42,9 @@ func (s *HandShake) check() bool {
 	return ed25519.Verify(pid.ToPubKey(), msg, s.Sig)
 }
 
-func (node *PipeMiner) handShake(conn *JsonConn) {
+func readServiceReq(conn *JsonConn, node *PipeMiner) (pipe *RightPipe, err error) {
 
-	pipe, err := readServiceReq(conn, node)
-	if err != nil {
-		return
-	}
-
-	go pipe.pullFromServer()
-
-	pipe.pushBackToClient()
-}
-
-func readServiceReq(conn *JsonConn, node *PipeMiner) (pipe *Pipe, err error) {
-	req := &HandShake{}
-	if err = conn.ReadJsonMsg(req); err != nil {
-		return nil, err
-	}
-
-	var cu *service = nil
+	var cu *customer = nil
 	if req.check() {
 		err = fmt.Errorf("signature invalid")
 		goto ACK

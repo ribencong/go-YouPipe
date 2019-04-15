@@ -6,7 +6,7 @@ import (
 	"net"
 )
 
-type Pipe struct {
+type LeftPipe struct {
 	*PayChannel
 	done        chan error
 	requestBuf  []byte
@@ -15,8 +15,8 @@ type Pipe struct {
 	consume     *service.PipeConn
 }
 
-func NewPipe(l net.Conn, r *service.PipeConn, pay *PayChannel) *Pipe {
-	return &Pipe{
+func NewPipe(l net.Conn, r *service.PipeConn, pay *PayChannel) *LeftPipe {
+	return &LeftPipe{
 		done:        make(chan error),
 		requestBuf:  make([]byte, service.BuffSize),
 		responseBuf: make([]byte, service.BuffSize),
@@ -26,7 +26,7 @@ func NewPipe(l net.Conn, r *service.PipeConn, pay *PayChannel) *Pipe {
 	}
 }
 
-func (p *Pipe) collectRequest() {
+func (p *LeftPipe) collectRequest() {
 
 	for {
 		nr, err := p.proxyConn.Read(p.requestBuf)
@@ -38,7 +38,7 @@ func (p *Pipe) collectRequest() {
 	}
 }
 
-func (p *Pipe) pullDataFromServer() {
+func (p *LeftPipe) pullDataFromServer() {
 
 	for {
 		n, err := p.consume.ReadCryptData(p.responseBuf)
@@ -52,6 +52,6 @@ func (p *Pipe) pullDataFromServer() {
 		if err != nil {
 			p.done <- err
 		}
-		p.CalculateConsumed(n)
+		p.consume(n)
 	}
 }

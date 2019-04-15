@@ -40,7 +40,6 @@ func newNode() *YouPipeNode {
 
 func (n *YouPipeNode) Start() {
 	go n.GossipNode.JoinSwarm()
-	go n.ServeNode.OpenPaymentChannel()
 	go n.ServeNode.Mining()
 }
 

@@ -20,7 +20,7 @@ var (
 
 type ID string
 
-func (id ID) ToSocketPort() uint16 {
+func (id ID) ToServerPort() uint16 {
 	h := fnv.New32a()
 	h.Write([]byte(id))
 	sum := h.Sum32()

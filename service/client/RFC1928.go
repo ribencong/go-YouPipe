@@ -25,10 +25,10 @@ import (
    authenticated.
    The protocol described here is designed to provide a framework for
    client-server applications in both the TCP and UDP domains to
-   conveniently and securely use the services of a network firewall.
+   conveniently and securely use the serverList of a network firewall.
    The protocol is conceptually a "shim-layer" between the application
    layer and the transport layer, and as such does not provide network-
-   layer gateway services, such as forwarding of ICMP messages.
+   layer gateway serverList, such as forwarding of ICMP messages.
 2.  Existing practice
    There currently exists a protocol, SOCKS Version 4, that provides for
    unsecured firewall traversal for TCP-based client-server
