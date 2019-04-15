@@ -9,34 +9,50 @@ import (
 )
 
 type ConsumerConn struct {
-	IV service.Salt
-	*Client
-	net.Conn
+	IV *service.Salt
+	*service.JsonConn
 	cipher.Stream
 }
 
-func NewConsumerConn(c net.Conn, iv []byte, cli *Client) *ConsumerConn {
+func NewConsumerConn(c net.Conn, key []byte) *ConsumerConn {
 
-	conn := &ConsumerConn{
-		Conn:   c,
-		Client: cli,
-	}
-	if len(iv) != aes.BlockSize {
+	salt := service.NewSalt()
+	if salt == nil {
 		return nil
 	}
-
-	copy(conn.IV[:], iv)
 
 	if err := c.(*net.TCPConn).SetKeepAlive(true); err != nil {
 		fmt.Println("set keepAlive for consumer connection err:", err)
 		return nil
 	}
-	block, err := aes.NewCipher(conn.connKey[:])
+	block, err := aes.NewCipher(key)
 	if err != nil {
 		fmt.Println("create cipher for connection err:", err)
 		return nil
 	}
 
-	conn.Stream = cipher.NewCFBDecrypter(block, iv)
-	return conn
+	return &ConsumerConn{
+		IV:       salt,
+		JsonConn: &service.JsonConn{Conn: c},
+		Stream:   cipher.NewCFBDecrypter(block, salt[:]),
+	}
+}
+
+func (c *ConsumerConn) WriteCryptData(buf []byte) (n int, err error) {
+	if len(buf) == 0 {
+		return
+	}
+	c.XORKeyStream(buf, buf)
+	n, err = c.Write(buf)
+	return
+}
+
+func (c *ConsumerConn) ReadCryptData(buf []byte) (n int, err error) {
+	n, err = c.Read(buf)
+	if err != nil {
+		return
+	}
+	buf = buf[:n]
+	c.XORKeyStream(buf, buf)
+	return
 }

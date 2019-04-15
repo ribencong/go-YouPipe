@@ -16,7 +16,7 @@ type reader struct {
 }
 
 func NewReader(r io.Reader, s cipher.Stream) io.Reader {
-	return &reader{Reader: r, Stream: s, buf: make([]byte, buffSize)}
+	return &reader{Reader: r, Stream: s, buf: make([]byte, BuffSize)}
 }
 
 func (r *reader) Read(b []byte) (int, error) {
@@ -60,7 +60,7 @@ type writer struct {
 }
 
 func NewWriter(w io.Writer, s cipher.Stream) io.Writer {
-	return &writer{Writer: w, Stream: s, buf: make([]byte, buffSize)}
+	return &writer{Writer: w, Stream: s, buf: make([]byte, BuffSize)}
 }
 
 func (w *writer) ReadFrom(r io.Reader) (n int64, err error) {
@@ -111,7 +111,7 @@ func Shadow(c net.Conn, k [32]byte) (net.Conn, error) {
 
 func (c *shadowConn) initReader() error {
 	if c.r == nil {
-		buf := make([]byte, buffSize)
+		buf := make([]byte, BuffSize)
 		iv := buf[:aes.BlockSize]
 		if _, err := io.ReadFull(c.Conn, iv); err != nil {
 			return err
@@ -123,7 +123,7 @@ func (c *shadowConn) initReader() error {
 
 func (c *shadowConn) initWriter() error {
 	if c.w == nil {
-		buf := make([]byte, buffSize)
+		buf := make([]byte, BuffSize)
 		iv := buf[:aes.BlockSize]
 		if _, err := io.ReadFull(rand.Reader, iv); err != nil {
 			return err

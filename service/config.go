@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	buffSize         = 1 << 15
+	BuffSize         = 1 << 15
 	DefaultKingKey   = "YP5rttHPzRsAe2RmF52sLzbBk4jpoPwJLtABaMv6qn7kVm"
 	SocksServerPoint = "0.0.0.0"
 )
@@ -50,7 +50,7 @@ func (conn *JsonConn) WriteJsonMsg(v interface{}) error {
 }
 
 func (conn *JsonConn) ReadJsonMsg(v interface{}) error {
-	buffer := make([]byte, buffSize)
+	buffer := make([]byte, BuffSize)
 	n, err := conn.Read(buffer)
 	if err != nil {
 		err = fmt.Errorf("failed to read request:->%v", err)

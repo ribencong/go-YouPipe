@@ -70,10 +70,13 @@ func (k *Key) ToNodeId() ID {
 }
 
 func (k *Key) GenerateAesKey(aesKey *[32]byte, peerPub []byte) error {
+	return GenerateAesKey(aesKey, peerPub, k.PriKey)
+}
 
+func GenerateAesKey(aesKey *[32]byte, peerPub []byte, key ed25519.PrivateKey) error {
 	var priKey [32]byte
 	var privateKeyBytes [64]byte
-	copy(privateKeyBytes[:], k.PriKey)
+	copy(privateKeyBytes[:], key)
 	PrivateKeyToCurve25519(&priKey, &privateKeyBytes)
 
 	var curvePub, pubKey [32]byte

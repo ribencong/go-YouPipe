@@ -27,16 +27,13 @@ type AccountInfo struct {
 	Cipher string
 }
 type MinerInfo struct {
-	minerAddr string
+	minerAddr account.ID
 	minerIP   string
 }
 
 func (m MinerInfo) IsOK() bool {
-	mid, err := account.ConvertToID(m.minerAddr)
-	if err != nil {
-		return false
-	}
-	port := mid.ToSocketPort()
+
+	port := m.minerAddr.ToSocketPort()
 	addr := network.JoinHostPort(m.minerIP, port) //TODO::set sole port
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
@@ -99,7 +96,8 @@ func NewClient(conf *Config, password string) (*Client, error) {
 		selectedService: mi,
 	}
 
-	if err := c.Account.CreateAesKey((*[32]byte)(&c.connKey), mi.minerAddr); err != nil {
+	if err := account.GenerateAesKey((*[32]byte)(&c.connKey),
+		mi.minerAddr.ToPubKey(), c.Key.PriKey); err != nil {
 		return nil, err
 	}
 
@@ -167,8 +165,14 @@ func ParseService(path string) *MinerInfo {
 		fmt.Println("invalid path:", path)
 		return nil
 	}
+
+	id, err := account.ConvertToID(idIps[0])
+	if err != nil {
+		return nil
+	}
+
 	mi := &MinerInfo{
-		minerAddr: idIps[0],
+		minerAddr: id,
 		minerIP:   idIps[1],
 	}
 	return mi

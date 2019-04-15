@@ -2,7 +2,6 @@ package client
 
 import (
 	"fmt"
-	"github.com/youpipe/go-youPipe/account"
 	"github.com/youpipe/go-youPipe/service"
 	"sync"
 )
@@ -41,8 +40,7 @@ func (p *PayChannel) payMonitor() {
 
 func (p *PayChannel) Sign(bill *service.PipeBill) (*service.PipeProof, error) {
 
-	minerId, _ := account.ConvertToID(p.selectedService.minerAddr)
-	if ok := bill.Verify(minerId); ok {
+	if ok := bill.Verify(p.selectedService.minerAddr); ok {
 		return nil, fmt.Errorf("miner's signature failed")
 	}
 
@@ -64,4 +62,10 @@ func (p *PayChannel) Sign(bill *service.PipeBill) (*service.PipeProof, error) {
 	p.unSigned -= bill.UsedBandWidth
 	p.totalUsed += bill.UsedBandWidth
 	return proof, nil
+}
+
+func (p *PayChannel) CalculateConsumed(n int) {
+	p.Lock()
+	defer p.Unlock()
+	p.unSigned += int64(n)
 }
