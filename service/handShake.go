@@ -30,7 +30,7 @@ func (s *HandShake) check() bool {
 	return ed25519.Verify(pid.ToPubKey(), msg, s.Sig)
 }
 
-func (node *PipeMiner) handShake(conn *CtrlConn) {
+func (node *PipeMiner) handShake(conn *JsonConn) {
 
 	pipe, err := readServiceReq(conn, node)
 	if err != nil {
@@ -42,9 +42,9 @@ func (node *PipeMiner) handShake(conn *CtrlConn) {
 	pipe.pushBackToClient()
 }
 
-func readServiceReq(conn *CtrlConn, node *PipeMiner) (pipe *Pipe, err error) {
+func readServiceReq(conn *JsonConn, node *PipeMiner) (pipe *Pipe, err error) {
 	req := &HandShake{}
-	if err = conn.ReadMsg(req); err != nil {
+	if err = conn.ReadJsonMsg(req); err != nil {
 		return nil, err
 	}
 

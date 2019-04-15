@@ -1,7 +1,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/youpipe/go-youPipe/account"
 	"github.com/youpipe/go-youPipe/network"
@@ -50,18 +49,18 @@ func (m MinerInfo) IsOK() bool {
 type YPServices []*MinerInfo
 
 func (s YPServices) RandomService() *MinerInfo {
-
 	r := rand.Intn(len(s))
 	return s[r]
 }
 
 type Client struct {
-	proxyServer net.Listener
 	*account.Account
-	connKey  service.PipeCryptKey
-	license  *service.License
-	services YPServices
-	payCh    *PayChannel
+	proxyServer     net.Listener
+	connKey         service.PipeCryptKey
+	license         *service.License
+	services        YPServices
+	selectedService *MinerInfo
+	payCh           *PayChannel
 }
 
 func NewClient(conf *Config, password string) (*Client, error) {
@@ -90,20 +89,75 @@ func NewClient(conf *Config, password string) (*Client, error) {
 		return nil, fmt.Errorf("no valid service")
 	}
 
+	mi := ser.RandomService()
+
 	c := &Client{
-		Account:     acc,
-		proxyServer: ls,
-		license:     l,
-		services:    ser,
+		Account:         acc,
+		proxyServer:     ls,
+		license:         l,
+		services:        ser,
+		selectedService: mi,
+	}
+
+	if err := c.Account.CreateAesKey((*[32]byte)(&c.connKey), mi.minerAddr); err != nil {
+		return nil, err
 	}
 
 	if err := c.createPayChannel(); err != nil {
 		return nil, err
 	}
+	return c, nil
+}
+
+func (c *Client) Running() error {
+
+	go c.payCh.payMonitor()
 
 	go c.Proxying()
 
-	return c, nil
+	for {
+		select {
+		case err := <-c.payCh.done:
+			c.Close()
+			return err
+		}
+	}
+}
+func (c *Client) Close() {
+
+}
+func (c *Client) createPayChannel() error {
+	port := c.Address.ToSocketPort() + 1 //TODO::
+
+	addr := network.JoinHostPort(c.selectedService.minerIP, port)
+
+	conn, err := net.Dial("tcp", addr)
+	if err != nil {
+		return err
+	}
+	appConn := &service.JsonConn{Conn: conn}
+
+	if err := appConn.WriteJsonMsg(c.license); err != nil {
+		return err
+	}
+
+	ack := &service.ACK{}
+	if err := appConn.ReadJsonMsg(ack); err != nil {
+		return err
+	}
+
+	if !ack.Success {
+		return fmt.Errorf("create payment channel failed:%s", ack.Message)
+	}
+
+	ch := &PayChannel{
+		conn:   appConn,
+		done:   make(chan error),
+		Client: c,
+	}
+
+	c.payCh = ch
+	return nil
 }
 
 func ParseService(path string) *MinerInfo {
@@ -137,38 +191,4 @@ func PopulateService(paths []string) YPServices {
 	}
 
 	return s
-}
-
-func (c *Client) createPayChannel() error {
-	port := c.Address.ToSocketPort() + 1 //TODO::
-
-	mi := c.services.RandomService()
-
-	addr := network.JoinHostPort(mi.minerIP, port)
-
-	conn, err := net.Dial("tcp", addr)
-	if err != nil {
-		return err
-	}
-	appConn := &service.CtrlConn{Conn: conn}
-
-	data, err := json.Marshal(c.license)
-	if err != nil {
-		return err
-	}
-
-	if _, err := appConn.Write(data); err != nil {
-		return err
-	}
-
-	ack := &service.ACK{}
-	if err := appConn.ReadMsg(ack); err != nil {
-		return err
-	}
-
-	c.payCh = &PayChannel{
-		conn: appConn,
-	}
-
-	return nil
 }

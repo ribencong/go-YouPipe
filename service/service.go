@@ -12,7 +12,7 @@ type service struct {
 	payChannel *thread.Thread
 }
 
-func (node *PipeMiner) newCustomer(conn *CtrlConn) {
+func (node *PipeMiner) newCustomer(conn *JsonConn) {
 	user, err := initCustomer(conn, node)
 
 	if err != nil {

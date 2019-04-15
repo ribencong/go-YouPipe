@@ -51,9 +51,9 @@ func ParseLicense(data string) (*License, error) {
 	return l, nil
 }
 
-func initCustomer(conn *CtrlConn, node *PipeMiner) (cu *service, err error) {
+func initCustomer(conn *JsonConn, node *PipeMiner) (cu *service, err error) {
 	l := &License{}
-	if err = conn.ReadMsg(l); err != nil {
+	if err = conn.ReadJsonMsg(l); err != nil {
 		return nil, err
 	}
 

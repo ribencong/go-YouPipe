@@ -66,7 +66,7 @@ func (node *PipeMiner) OpenPaymentChannel() {
 		if err != nil {
 			panic(err)
 		}
-		c := &CtrlConn{conn}
+		c := &JsonConn{conn}
 		go node.newCustomer(c)
 	}
 }
@@ -79,7 +79,7 @@ func (node *PipeMiner) Mining() {
 		if err != nil {
 			panic(err)
 		}
-		c := &CtrlConn{conn}
+		c := &JsonConn{conn}
 		go node.handShake(c)
 	}
 }
