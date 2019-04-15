@@ -40,7 +40,7 @@ func (conn *CtrlConn) ReadMsg(v interface{}) error {
 	buffer := make([]byte, buffSize)
 	n, err := conn.Read(buffer)
 	if err != nil {
-		err = fmt.Errorf("failed to read address:->%v", err)
+		err = fmt.Errorf("failed to read request:->%v", err)
 		return err
 	}
 

@@ -163,3 +163,24 @@ func CheckID(address string) bool {
 
 	return true
 }
+
+func AccFromString(addr, cipher, password string) (*Account, error) {
+
+	address, err := ConvertToID(addr)
+	if err != nil {
+		return nil, err
+	}
+
+	acc := &Account{
+		Address: address,
+		Key: &Key{
+			LockedKey: base58.Decode(cipher),
+		},
+	}
+
+	if ok := acc.UnlockAcc(password); !ok {
+		return nil, fmt.Errorf("unlock account failed")
+	}
+
+	return acc, nil
+}

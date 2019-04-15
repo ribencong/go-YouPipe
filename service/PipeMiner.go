@@ -10,27 +10,27 @@ import (
 )
 
 var (
-	instance  *SNode = nil
+	instance  *PipeMiner = nil
 	once      sync.Once
 	logger, _ = logging.GetLogger(utils.LMService)
 )
 
-type SNode struct {
+type PipeMiner struct {
 	sync.RWMutex
 	serviceConn  net.Listener
 	microPayConn net.Listener
-	users        map[string]*customer
+	users        map[string]*service
 }
 
-func GetSNode() *SNode {
+func GetMiner() *PipeMiner {
 	once.Do(func() {
-		instance = newServiceNode()
+		instance = newMiner()
 	})
 
 	return instance
 }
 
-func newServiceNode() *SNode {
+func newMiner() *PipeMiner {
 	id := account.GetAccount().Address
 	servicePort := id.ToSocketPort()
 	addr := network.JoinHostPort(Config.ServiceIP, servicePort)
@@ -50,16 +50,16 @@ func newServiceNode() *SNode {
 	}
 	logger.Infof("MicroPayment chanel starting at: %s", addr)
 
-	node := &SNode{
+	node := &PipeMiner{
 		serviceConn:  l,
 		microPayConn: p,
-		users:        make(map[string]*customer),
+		users:        make(map[string]*service),
 	}
 
 	return node
 }
 
-func (node *SNode) OpenPaymentChannel() {
+func (node *PipeMiner) OpenPaymentChannel() {
 	defer node.microPayConn.Close()
 	for {
 		conn, err := node.microPayConn.Accept()
@@ -71,7 +71,7 @@ func (node *SNode) OpenPaymentChannel() {
 	}
 }
 
-func (node *SNode) Mining() {
+func (node *PipeMiner) Mining() {
 	defer node.serviceConn.Close()
 
 	for {
@@ -84,20 +84,20 @@ func (node *SNode) Mining() {
 	}
 }
 
-func (node *SNode) addCustomer(peerID string, user *customer) {
+func (node *PipeMiner) addCustomer(peerID string, user *service) {
 	node.Lock()
 	defer node.Unlock()
 	node.users[peerID] = user
 	logger.Debugf("New Customer(%s)", peerID)
 }
 
-func (node *SNode) getCustomer(peerId string) *customer {
+func (node *PipeMiner) getCustomer(peerId string) *service {
 	node.RLock()
 	defer node.RUnlock()
 	return node.users[peerId]
 }
 
-func (node *SNode) removeUser(peerId string) {
+func (node *PipeMiner) removeUser(peerId string) {
 	node.Lock()
 	defer node.Unlock()
 	delete(node.users, peerId)

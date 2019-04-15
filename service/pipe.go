@@ -11,7 +11,7 @@ import (
 
 type PipeAdmin struct {
 	sync.RWMutex
-	aesKey [32]byte
+	aesKey PipeCryptKey
 	pipes  map[string]*Pipe
 }
 
@@ -25,7 +25,7 @@ func newAdmin(peerAddr string) *PipeAdmin {
 	admin := &PipeAdmin{
 		pipes: make(map[string]*Pipe),
 	}
-	if err := account.GetAccount().CreateAesKey(&admin.aesKey, peerAddr); err != nil {
+	if err := account.GetAccount().CreateAesKey((*[32]byte)(&admin.aesKey), peerAddr); err != nil {
 		logger.Errorf("create pipe admin's aes key err:->", err)
 		return nil
 	}
@@ -86,13 +86,13 @@ type Pipe struct {
 	right  net.Conn
 }
 
-func (p *Pipe) pull() {
+func (p *Pipe) pullFromServer() {
 	n, err := io.Copy(p.right, p.left)
 	p.up = n
 	p.expire(err)
 }
 
-func (p *Pipe) push() {
+func (p *Pipe) pushBackToClient() {
 	n, err := io.Copy(p.left, p.right)
 	p.down = n
 	p.expire(err)

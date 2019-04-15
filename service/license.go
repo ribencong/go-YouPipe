@@ -10,7 +10,7 @@ import (
 
 const KingFinger = account.ID("YP5rttHPzRsAe2RmF52sLzbBk4jpoPwJLtABaMv6qn7kVm")
 
-type Content struct {
+type LicenseData struct {
 	StartDate time.Time
 	EndDate   time.Time
 	UserAddr  string
@@ -18,48 +18,58 @@ type Content struct {
 
 type License struct {
 	Signature []byte
-	*Content
+	*LicenseData
 }
 
-func (l *License) check() bool {
-	msg, err := json.Marshal(l.Content)
+func (l *License) Verify() error {
+	msg, err := json.Marshal(l.LicenseData)
 	if err != nil {
-		return false
+		return err
 	}
 
 	if ok := ed25519.Verify(KingFinger.ToPubKey(), msg, l.Signature); !ok {
-		logger.Warning("signature check failed")
-		return false
+		return fmt.Errorf("signature Verify failed")
 	}
+
 	now := time.Now()
 	if now.Before(l.StartDate) || now.After(l.EndDate) {
-		logger.Warning("license time invalid(%s)", l.UserAddr)
-		return false
+		return fmt.Errorf("license time invalid(%s)", l.UserAddr)
+
 	}
 
-	return false
+	return nil
 }
 
-func initCustomer(conn *CtrlConn, node *SNode) (*customer, error) {
+func ParseLicense(data string) (*License, error) {
 	l := &License{}
-	if err := conn.ReadMsg(l); err != nil {
+	if err := json.Unmarshal([]byte(data), l); err != nil {
+		return nil, err
+	}
+	if err := l.Verify(); err != nil {
+		return nil, err
+	}
+	return l, nil
+}
+
+func initCustomer(conn *CtrlConn, node *PipeMiner) (cu *service, err error) {
+	l := &License{}
+	if err = conn.ReadMsg(l); err != nil {
 		return nil, err
 	}
 
-	if !l.check() {
-		return nil, fmt.Errorf("signature failed err:%s", l.UserAddr)
+	peerAddr := l.UserAddr
+	if err = l.Verify(); err != nil {
+		goto ACK
 	}
 
-	peerAddr := l.UserAddr
-	cu := node.getCustomer(peerAddr)
-
+	cu = node.getCustomer(peerAddr)
 	if cu == nil {
 		admin := newAdmin(peerAddr)
 		if admin == nil {
-			return nil, fmt.Errorf("aes key error when create customer%s", peerAddr)
+			return nil, fmt.Errorf("aes key error when create service%s", peerAddr)
 		}
 
-		cu = &customer{
+		cu = &service{
 			address:    peerAddr,
 			license:    l,
 			pipeMng:    admin,
@@ -67,8 +77,12 @@ func initCustomer(conn *CtrlConn, node *SNode) (*customer, error) {
 		}
 
 		node.addCustomer(peerAddr, cu)
+	} else {
+		//TODO::
+		//ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
 	}
 
-	conn.writeAck(nil)
-	return cu, nil
+ACK:
+	conn.writeAck(err)
+	return
 }

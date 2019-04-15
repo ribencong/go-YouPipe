@@ -15,7 +15,7 @@ var (
 )
 
 type YouPipeNode struct {
-	ServeNode  *service.SNode
+	ServeNode  *service.PipeMiner
 	GossipNode *gossip.GNode
 }
 
@@ -31,7 +31,7 @@ func newNode() *YouPipeNode {
 
 	obj := &YouPipeNode{
 		GossipNode: gossip.GetGspNode(),
-		ServeNode:  service.GetSNode(),
+		ServeNode:  service.GetMiner(),
 	}
 
 	obj.SetGspFilter()

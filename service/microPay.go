@@ -20,7 +20,7 @@ func newMicroPayment(c net.Conn) *thread.Thread {
 	}
 
 	t := thread.NewThreadWithName(p, rAddr)
-	logger.Debugf("new customer(%s) coming.", t.Name)
+	logger.Debugf("new service(%s) coming.", t.Name)
 	return t
 }
 
