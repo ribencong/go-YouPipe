@@ -1,9 +1,7 @@
 package service
 
 import (
-	"encoding/json"
 	"fmt"
-	"net"
 )
 
 const (
@@ -25,62 +23,4 @@ type SrvConf struct {
 func (conf SrvConf) String() string {
 	return fmt.Sprintf("+%-15s:%40s+\n",
 		"ServiceIP", conf.ServiceIP)
-}
-
-type ACK struct {
-	Success bool
-	Message string
-}
-
-type JsonConn struct {
-	net.Conn
-}
-
-func (conn *JsonConn) WriteJsonMsg(v interface{}) error {
-
-	data, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-
-	if _, err := conn.Write(data); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (conn *JsonConn) ReadJsonMsg(v interface{}) error {
-	buffer := make([]byte, BuffSize)
-	n, err := conn.Read(buffer)
-	if err != nil {
-		err = fmt.Errorf("failed to read request:->%v", err)
-		return err
-	}
-
-	if err = json.Unmarshal(buffer[:n], v); err != nil {
-		err = fmt.Errorf("unmarshal address:->%v", err)
-		return err
-	}
-	return nil
-}
-
-//TODO::
-func (conn *JsonConn) writeAck(err error) {
-	var data []byte
-	if err == nil {
-		data, _ = json.Marshal(&ACK{
-			Success: true,
-			Message: "Success",
-		})
-	} else {
-		data, _ = json.Marshal(&ACK{
-			Success: false,
-			Message: err.Error(),
-		})
-	}
-
-	_, errW := conn.Write(data)
-	if errW != nil || err != nil {
-		conn.Close()
-	}
 }

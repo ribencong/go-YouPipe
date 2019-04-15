@@ -12,10 +12,10 @@ type Pipe struct {
 	requestBuf  []byte
 	responseBuf []byte
 	proxyConn   net.Conn
-	consume     *ConsumerConn
+	consume     *service.PipeConn
 }
 
-func NewPipe(l net.Conn, r *ConsumerConn, pay *PayChannel) *Pipe {
+func NewPipe(l net.Conn, r *service.PipeConn, pay *PayChannel) *Pipe {
 	return &Pipe{
 		done:        make(chan error),
 		requestBuf:  make([]byte, service.BuffSize),
@@ -24,13 +24,6 @@ func NewPipe(l net.Conn, r *ConsumerConn, pay *PayChannel) *Pipe {
 		consume:     r,
 		PayChannel:  pay,
 	}
-}
-
-func (p *Pipe) Working() {
-
-	go p.collectRequest()
-
-	p.pullDataFromServer()
 }
 
 func (p *Pipe) collectRequest() {
@@ -61,5 +54,4 @@ func (p *Pipe) pullDataFromServer() {
 		}
 		p.CalculateConsumed(n)
 	}
-
 }

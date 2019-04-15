@@ -116,13 +116,9 @@ func (c *Client) Running() error {
 	for {
 		select {
 		case err := <-c.payCh.done:
-			c.Close()
 			return err
 		}
 	}
-}
-func (c *Client) Close() {
-
 }
 func (c *Client) createPayChannel() error {
 	port := c.Address.ToSocketPort() + 1 //TODO::
@@ -151,7 +147,8 @@ func (c *Client) createPayChannel() error {
 	ch := &PayChannel{
 		conn:   appConn,
 		done:   make(chan error),
-		Client: c,
+		peerID: c.Address,
+		PriKey: c.Key.PriKey,
 	}
 
 	c.payCh = ch

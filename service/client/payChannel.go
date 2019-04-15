@@ -2,14 +2,17 @@ package client
 
 import (
 	"fmt"
+	"github.com/youpipe/go-youPipe/account"
 	"github.com/youpipe/go-youPipe/service"
+	"golang.org/x/crypto/ed25519"
 	"sync"
 )
 
 type PayChannel struct {
-	*Client
-	conn *service.JsonConn
-	done chan error
+	peerID account.ID
+	PriKey ed25519.PrivateKey
+	conn   *service.JsonConn
+	done   chan error
 	sync.RWMutex
 	totalUsed int64
 	unSigned  int64
@@ -40,7 +43,7 @@ func (p *PayChannel) payMonitor() {
 
 func (p *PayChannel) Sign(bill *service.PipeBill) (*service.PipeProof, error) {
 
-	if ok := bill.Verify(p.selectedService.minerAddr); ok {
+	if ok := bill.Verify(p.peerID); ok {
 		return nil, fmt.Errorf("miner's signature failed")
 	}
 
@@ -55,7 +58,7 @@ func (p *PayChannel) Sign(bill *service.PipeBill) (*service.PipeProof, error) {
 		PipeBill: bill,
 	}
 
-	if err := proof.Sign(p.Account.Key.PriKey); err != nil {
+	if err := proof.Sign(p.PriKey); err != nil {
 		return nil, err
 	}
 

@@ -41,7 +41,7 @@ func (c *Client) consume(conn net.Conn) {
 	}
 	rConn.(*net.TCPConn).SetKeepAlive(true)
 
-	consumeConn := NewConsumerConn(rConn, c.connKey[:])
+	consumeConn := service.NewConsumerConn(rConn, c.connKey)
 	if consumeConn == nil {
 		fmt.Println("create consume Conn failed")
 		return
@@ -52,7 +52,6 @@ func (c *Client) consume(conn net.Conn) {
 		fmt.Println("write hand shake data err:->", err)
 		return
 	}
-
 	ack := &service.ACK{}
 	if err := consumeConn.ReadJsonMsg(ack); err != nil {
 		fmt.Printf("failed to read miner's response :->%v", err)
@@ -65,7 +64,9 @@ func (c *Client) consume(conn net.Conn) {
 	}
 
 	pipe := NewPipe(conn, consumeConn, c.payCh)
-	pipe.Working()
+	go pipe.collectRequest()
+
+	pipe.pullDataFromServer()
 }
 
 func (c *Client) NewHandReq(target string) *service.HandShake {
