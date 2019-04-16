@@ -83,14 +83,8 @@ func (c *Client) Running() error {
 	go c.payCh.payMonitor()
 
 	go c.Proxying()
-
-	for {
-		select {
-		case err := <-c.payCh.done:
-
-			return err
-		}
-	}
+	err := <-c.payCh.done
+	return err
 }
 
 func (c *Client) createPayChannel() error {
@@ -125,6 +119,10 @@ func (c *Client) createPayChannel() error {
 	}
 
 	return nil
+}
+
+func (c *Client) Close() {
+
 }
 
 type YPServices []*service.ServeNodeId

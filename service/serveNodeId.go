@@ -42,6 +42,20 @@ func (m *ServeNodeId) ToString() string {
 	return strings.Join([]string{m.ID.ToString(), m.IP}, ServeNodeSep)
 }
 
+func IsIPAddr(ip string) bool {
+	trial := net.ParseIP(ip)
+	if trial.To4() == nil {
+		fmt.Printf("%v is not a valid IPv4 address\n", trial)
+
+		if trial.To16() == nil {
+			fmt.Printf("%v is not a valid IP address\n", trial)
+			return false
+		}
+	}
+
+	return true
+}
+
 func ParseService(path string) *ServeNodeId {
 	idIps := strings.Split(path, ServeNodeSep)
 
@@ -52,6 +66,10 @@ func ParseService(path string) *ServeNodeId {
 
 	id, err := account.ConvertToID(idIps[0])
 	if err != nil {
+		return nil
+	}
+
+	if ok := IsIPAddr(idIps[1]); !ok {
 		return nil
 	}
 
