@@ -95,7 +95,7 @@ func (c *Client) Running() error {
 
 func (c *Client) createPayChannel() error {
 
-	addr := c.curService.ToPipeAddr()
+	addr := c.curService.TONetAddr()
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		return err

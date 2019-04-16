@@ -16,17 +16,24 @@ type ServeNodeId struct {
 }
 
 func (m *ServeNodeId) IsOK() bool {
-	port := m.ID.ToServerPort()
-	addr := network.JoinHostPort(m.IP, port)
+	addr := m.TONetAddr()
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		return false
 	}
-	conn.Close()
+	hs := &YPHandShake{
+		CmdType: CmdCheck,
+	}
+
+	jsonConn := JsonConn{conn}
+	if err := jsonConn.Syn(hs); err != nil {
+		return false
+	}
+
 	return true
 }
 
-func (m *ServeNodeId) ToPipeAddr() string {
+func (m *ServeNodeId) TONetAddr() string {
 	port := m.ID.ToServerPort()
 	return network.JoinHostPort(m.IP, port)
 }
