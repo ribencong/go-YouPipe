@@ -17,6 +17,7 @@ func init() {
 	SysConf.LogPath = filepath.Join(baseDir, string(filepath.Separator), "yp.log")
 	SysConf.AccDataPath = filepath.Join(baseDir, string(filepath.Separator), "acc.data")
 	SysConf.PidPath = filepath.Join(baseDir, string(filepath.Separator), "pid")
+	SysConf.ReceiptPath = filepath.Join(baseDir, string(filepath.Separator), "receipt")
 }
 
 type SysConfig struct {
@@ -24,6 +25,7 @@ type SysConfig struct {
 	LogPath     string
 	AccDataPath string
 	PidPath     string
+	ReceiptPath string
 }
 
 var SysConf = &SysConfig{}
@@ -36,7 +38,7 @@ func (c SysConfig) String() string {
 		"LogPath", c.LogPath,
 		"AccDataPath", c.AccDataPath,
 		"PidPath", c.PidPath,
-		"PidPath", c.PidPath)
+		"ReceiptPath", c.ReceiptPath)
 }
 
 func ShowConfig() string {

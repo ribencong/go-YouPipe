@@ -51,7 +51,7 @@ func (l *License) VerifyData() error {
 
 	now := time.Now()
 	if now.Before(l.StartDate) || now.After(l.EndDate) {
-		return fmt.Errorf("Lic time invalid(%s)", l.UserAddr)
+		return fmt.Errorf("lic time invalid(%s)", l.UserAddr)
 	}
 
 	return nil

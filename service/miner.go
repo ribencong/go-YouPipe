@@ -19,7 +19,8 @@ var (
 type PipeCmd int
 
 const (
-	_ PipeCmd = iota
+	MaxCharger         = 100
+	_          PipeCmd = iota
 	CmdPayChanel
 	CmdPipe
 	CmdCheck
@@ -40,6 +41,7 @@ type YPHandShake struct {
 type PipeMiner struct {
 	sync.RWMutex
 	done       chan error
+	proofSaver *Receipt
 	serverConn net.Listener
 	chargers   map[string]*bandCharger
 }
@@ -62,6 +64,7 @@ func newMiner() *PipeMiner {
 
 	node := &PipeMiner{
 		done:       make(chan error),
+		proofSaver: newReceipt(),
 		serverConn: s,
 		chargers:   make(map[string]*bandCharger),
 	}
@@ -70,6 +73,11 @@ func newMiner() *PipeMiner {
 }
 
 func (node *PipeMiner) Mining() {
+
+	go node.proofSaver.DBWork()
+
+	go node.PatrolLicense()
+
 	defer node.serverConn.Close()
 	for {
 		conn, err := node.serverConn.Accept()
@@ -121,10 +129,11 @@ func (node *PipeMiner) initCharger(conn *JsonConn, sig []byte, l *License) (*ban
 
 	charger := &bandCharger{
 		JsonConn:   conn,
+		receipt:    node.proofSaver.proofs,
 		token:      BandWidthPerToPay * 2,
 		peerID:     account.ID(l.UserAddr),
 		bill:       make(chan *PipeBill),
-		receipt:    make(chan struct{}),
+		checkIn:    make(chan struct{}),
 		peerIPAddr: conn.RemoteAddr().String(),
 	}
 
@@ -211,4 +220,8 @@ func (node *PipeMiner) removeCharger(c *bandCharger) {
 	defer node.Unlock()
 	delete(node.chargers, c.peerID.ToString())
 	logger.Debugf("Remove Customer(%s)", c.peerID)
+}
+
+//TODO::
+func (node *PipeMiner) PatrolLicense() {
 }

@@ -19,7 +19,8 @@ type bandCharger struct {
 	token      int64
 	peerID     account.ID
 	bill       chan *PipeBill
-	receipt    chan struct{}
+	receipt    chan *PipeProof
+	checkIn    chan struct{}
 	peerIPAddr string
 	aesKey     account.PipeCryptKey
 }
@@ -39,11 +40,13 @@ func (c *bandCharger) charging() error {
 			return err
 		}
 
-		if proof.Verify(c.peerID) {
-			c.fullFill()
-		} else {
+		if !proof.Verify(c.peerID) {
 			logger.Error("wrong signature for bandwidth bill:->", proof)
+			continue
 		}
+
+		c.fullFill()
+		c.receipt <- proof
 	}
 }
 
@@ -51,7 +54,7 @@ func (c *bandCharger) fullFill() {
 	c.Lock()
 	defer c.Unlock()
 	c.token += BandWidthPerToPay
-	c.receipt <- struct{}{}
+	c.checkIn <- struct{}{}
 }
 
 func (c *bandCharger) Charge(n int) error {
@@ -65,7 +68,7 @@ func (c *bandCharger) Charge(n int) error {
 
 	c.bill <- createBill(c.peerID.ToString())
 	select {
-	case <-c.receipt:
+	case <-c.checkIn:
 		{
 			return nil
 		}
@@ -81,6 +84,8 @@ func (c *bandCharger) Charge(n int) error {
 func createBill(customerAddr string) *PipeBill {
 
 	mi := &Mineral{
+		Ver:           CurrentMineralVer,
+		MinedTime:     time.Now(),
 		UsedBandWidth: BandWidthPerToPay,
 		ConsumerAddr:  customerAddr,
 		MinerAddr:     account.GetAccount().Address.ToString(),
