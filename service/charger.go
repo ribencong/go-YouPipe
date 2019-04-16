@@ -49,14 +49,14 @@ func (c *bandCharger) charging() error {
 
 func (c *bandCharger) fullFill() {
 	c.Lock()
-	c.Unlock()
+	defer c.Unlock()
 	c.token += BandWidthPerToPay
 	c.receipt <- struct{}{}
 }
 
 func (c *bandCharger) Charge(n int) error {
 	c.Lock()
-	c.Unlock()
+	defer c.Unlock()
 	c.token -= int64(n)
 
 	if c.token > BandWidthPerToPay {
