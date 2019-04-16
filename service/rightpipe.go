@@ -29,7 +29,6 @@ func (s *PipeReqData) Verify(sig []byte) bool {
 func NewPipe(l *PipeConn, r net.Conn, charger *bandCharger) *RightPipe {
 
 	return &RightPipe{
-		done:        make(chan error),
 		mineBuf:     make([]byte, BuffSize),
 		serverBuf:   make([]byte, BuffSize),
 		serverConn:  r,
@@ -39,7 +38,6 @@ func NewPipe(l *PipeConn, r net.Conn, charger *bandCharger) *RightPipe {
 }
 
 type RightPipe struct {
-	done       chan error
 	mineBuf    []byte
 	serverBuf  []byte
 	serverConn net.Conn
@@ -48,40 +46,37 @@ type RightPipe struct {
 }
 
 func (p *RightPipe) listenRequest() {
-	for {
+	defer p.expire()
 
+	for {
 		n, err := p.chargeConn.ReadCryptData(p.serverBuf)
 		if n > 0 {
 			if _, errW := p.serverConn.Write(p.serverBuf[:n]); errW != nil {
-				p.done <- errW
 				return
 			}
 		}
 		if err != nil {
-			p.done <- err
 			return
 		}
 	}
 }
 
 func (p *RightPipe) pushBackToClient() {
-	for {
+	defer p.expire()
 
+	for {
 		n, err := p.serverConn.Read(p.serverBuf)
 		if n > 0 {
 			if _, errW := p.chargeConn.WriteCryptData(p.serverBuf[:n]); errW != nil {
-				p.done <- errW
 				return
 			}
 		}
 
 		if err != nil {
-			p.done <- err
 			return
 		}
 
 		if err := p.bandCharger.Charge(n); err != nil {
-			p.done <- err
 			return
 		}
 	}
