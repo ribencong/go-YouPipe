@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/youpipe/go-youPipe/network"
 	"github.com/youpipe/go-youPipe/service"
-	"golang.org/x/crypto/ed25519"
 	"net"
 )
 
@@ -15,60 +14,56 @@ func (c *Client) Proxying() {
 		fmt.Printf("finish to accept :%s", err)
 		return
 	}
+
+	conn.(*net.TCPConn).SetKeepAlive(true)
 	go c.consume(conn)
 }
 
 func (c *Client) consume(conn net.Conn) {
 	defer conn.Close()
-	conn.(*net.TCPConn).SetKeepAlive(true)
-	fmt.Println("a new connection :->", conn.RemoteAddr().String())
 
-	obj, err := HandShake(conn)
+	obj, err := ProxyHandShake(conn)
 	if err != nil {
 		fmt.Println("sock5 handshake err:->", err)
 		return
 	}
-	fmt.Println("target info:->", obj.target)
 
-	port := c.curService.minerAddr.ToServerPort()
-	addr := network.JoinHostPort(c.curService.minerIP, port)
-	rConn, err := net.Dial("tcp", addr)
-
+	jsonConn, err := c.connectSockServer()
 	if err != nil {
-		fmt.Printf("failed to connect to (%s) access point server (%s):->", addr, err)
 		return
 	}
-	rConn.(*net.TCPConn).SetKeepAlive(true)
 
-	consumeConn := service.NewConsumerConn(rConn, c.connKey)
+	if err := c.pipeHandshake(jsonConn, obj.target); err != nil {
+		return
+	}
+
+	consumeConn := service.NewConsumerConn(jsonConn.Conn, c.aesKey)
 	if consumeConn == nil {
-		fmt.Println("create consume Conn failed")
-		return
-	}
-	req := c.NewHandReq(obj.target)
-
-	if err := consumeConn.WriteJsonMsg(req); err != nil {
-		fmt.Println("write hand shake data err:->", err)
-		return
-	}
-	ack := &service.YouPipeACK{}
-	if err := consumeConn.ReadJsonMsg(ack); err != nil {
-		fmt.Printf("failed to read miner's response :->%v", err)
-		return
-	}
-
-	if !ack.Success {
-		fmt.Println("hand shake to miner err:->", ack.Message)
 		return
 	}
 
 	pipe := NewPipe(conn, consumeConn, c.payCh)
+
 	go pipe.collectRequest()
 
 	pipe.pullDataFromServer()
 }
 
-func (c *Client) NewHandReq(target string) *service.YPHandShake {
+func (c *Client) connectSockServer() (*service.JsonConn, error) {
+
+	port := c.curService.ID.ToServerPort()
+	addr := network.JoinHostPort(c.curService.IP, port)
+	conn, err := net.Dial("tcp", addr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to (%s) access point server (%s):->", addr, err)
+
+	}
+	conn.(*net.TCPConn).SetKeepAlive(true)
+	return &service.JsonConn{conn}, nil
+}
+
+func (c *Client) pipeHandshake(conn *service.JsonConn, target string) error {
+
 	reqData := &service.PipeReqData{
 		Addr:   c.Address.ToString(),
 		Target: target,
@@ -76,15 +71,29 @@ func (c *Client) NewHandReq(target string) *service.YPHandShake {
 
 	data, err := json.Marshal(reqData)
 	if err != nil {
-		fmt.Println("marshal hand shake data err:->", err)
-		return nil
+		return fmt.Errorf("marshal hand shake data err:%v", err)
 	}
 
-	sig := ed25519.Sign(c.Key.PriKey, data)
-	req := &service.YPHandShake{
+	sig := c.Sign(data)
+
+	hs := &service.YPHandShake{
+		CmdType:     service.CmdPipe,
 		Sig:         sig,
 		PipeReqData: reqData,
 	}
 
-	return req
+	if err := conn.WriteJsonMsg(hs); err != nil {
+		return fmt.Errorf("write hand shake data err:%v", err)
+
+	}
+	ack := &service.YouPipeACK{}
+	if err := conn.ReadJsonMsg(ack); err != nil {
+		return fmt.Errorf("failed to read miner's response :->%v", err)
+	}
+
+	if !ack.Success {
+		return fmt.Errorf("hand shake to miner err:%s", ack.Message)
+	}
+
+	return nil
 }

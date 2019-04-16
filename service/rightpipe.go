@@ -1,11 +1,10 @@
 package service
 
 import (
-	"fmt"
+	"encoding/json"
 	"github.com/youpipe/go-youPipe/account"
-	"io"
+	"golang.org/x/crypto/ed25519"
 	"net"
-	"sync"
 	"time"
 )
 
@@ -19,94 +18,81 @@ type PipeRequest struct {
 	*PipeReqData
 }
 
-func (a *PipeAdmin) addNewPipe(l net.Conn, target string) (*RightPipe, error) {
-	r, err := net.Dial("tcp", target)
+func (s *PipeRequest) Verify() bool {
+	msg, err := json.Marshal(s.PipeReqData)
 	if err != nil {
-		err = fmt.Errorf("failed to connect Target %v", err)
-		return nil, err
-	}
-	if err := r.(*net.TCPConn).SetKeepAlive(true); err != nil {
-		return nil, err
+		return false
 	}
 
-	l, err = Shadow(l, a.aesKey)
+	pid, err := account.ConvertToID(s.Addr)
 	if err != nil {
-		err = fmt.Errorf("shadow the incoming conn err:%v", err)
-		return nil, err
+		return false
 	}
-
-	p := newPipe(l, r)
-	a.Lock()
-	defer a.Unlock()
-
-	if _, ok := a.pipes[p.PipeID]; ok {
-		err = fmt.Errorf("duplicate Target:%s", p.PipeID)
-		return nil, err
-	}
-
-	a.pipes[p.PipeID] = p
-	return p, nil
+	return ed25519.Verify(pid.ToPubKey(), msg, s.Sig)
 }
 
-func (a *PipeAdmin) removePipe(pid string) {
+func NewPipe(l *PipeConn, r net.Conn, charger *bandCharger) *RightPipe {
 
-	a.Lock()
-	defer a.Unlock()
-
-	p, ok := a.pipes[pid]
-	if !ok {
-		logger.Warning("no such pipe to remove:->", pid)
-		return
+	return &RightPipe{
+		done:        make(chan error),
+		mineBuf:     make([]byte, BuffSize),
+		serverBuf:   make([]byte, BuffSize),
+		serverConn:  r,
+		chargeConn:  l,
+		bandCharger: charger,
 	}
-	p.close()
-	delete(a.pipes, pid)
-	logger.Debugf("remove pipe(%s)", p.PipeID)
 }
 
 type RightPipe struct {
-	PipeID string
-	err    error
-	up     int64
-	down   int64
-	left   net.Conn
-	right  net.Conn
+	done       chan error
+	mineBuf    []byte
+	serverBuf  []byte
+	serverConn net.Conn
+	chargeConn *PipeConn
+	*bandCharger
 }
 
-func (p *RightPipe) pullFromServer() {
-	n, err := io.Copy(p.right, p.left)
-	p.up = n
-	p.expire(err)
+func (p *RightPipe) listenRequest() {
+	for {
+
+		n, err := p.chargeConn.ReadCryptData(p.serverBuf)
+		if n > 0 {
+			if _, errW := p.serverConn.Write(p.serverBuf[:n]); errW != nil {
+				p.done <- errW
+				return
+			}
+		}
+		if err != nil {
+			p.done <- err
+			return
+		}
+	}
 }
 
 func (p *RightPipe) pushBackToClient() {
-	n, err := io.Copy(p.left, p.right)
-	p.down = n
-	p.expire(err)
+	for {
+
+		n, err := p.serverConn.Read(p.serverBuf)
+		if n > 0 {
+			if _, errW := p.chargeConn.WriteCryptData(p.serverBuf[:n]); errW != nil {
+				p.done <- errW
+				return
+			}
+		}
+
+		if err != nil {
+			p.done <- err
+			return
+		}
+
+		if err := p.bandCharger.Charge(n); err != nil {
+			p.done <- err
+			return
+		}
+	}
 }
 
-func (p *RightPipe) expire(err error) {
-	p.right.SetDeadline(time.Now())
-	p.left.SetDeadline(time.Now())
-	if err == nil {
-		return
-	}
-
-	if err, ok := err.(net.Error); !ok || !err.Timeout() {
-		p.err = err
-	}
-}
-
-func (p *RightPipe) close() {
-	p.right.Close()
-	logger.Debugf("pipe(%s) closing", p.PipeID)
-}
-
-func newPipe(l, r net.Conn) *RightPipe {
-	pid := fmt.Sprintf("%s<->%s", l.RemoteAddr().String(), r.RemoteAddr().String())
-	p := &RightPipe{
-		PipeID: pid,
-		left:   l,
-		right:  r,
-	}
-	return p
+func (p *RightPipe) expire() {
+	p.chargeConn.SetDeadline(time.Now())
+	p.serverConn.SetDeadline(time.Now())
 }

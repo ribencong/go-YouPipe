@@ -5,6 +5,7 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"fmt"
+	"github.com/youpipe/go-youPipe/account"
 	"io"
 	"net"
 )
@@ -20,16 +21,14 @@ func NewSalt() *Salt {
 	return s
 }
 
-type PipeCryptKey [32]byte
-
 type PipeConn struct {
 	IV *Salt
-	*JsonConn
+	net.Conn
 	Coder   cipher.Stream
 	Decoder cipher.Stream
 }
 
-func NewProducerConn(c net.Conn, key PipeCryptKey) *PipeConn {
+func NewProducerConn(c net.Conn, key account.PipeCryptKey) *PipeConn {
 	salt := new(Salt)
 	_, err := io.ReadFull(c, salt[:])
 	if err != nil {
@@ -40,7 +39,7 @@ func NewProducerConn(c net.Conn, key PipeCryptKey) *PipeConn {
 	return newConn(c, key, salt)
 }
 
-func NewConsumerConn(c net.Conn, key PipeCryptKey) *PipeConn {
+func NewConsumerConn(c net.Conn, key account.PipeCryptKey) *PipeConn {
 	salt := NewSalt()
 	if salt == nil {
 		logger.Error("read salt for consumer connection failed:")
@@ -50,11 +49,12 @@ func NewConsumerConn(c net.Conn, key PipeCryptKey) *PipeConn {
 	return newConn(c, key, salt)
 }
 
-func newConn(c net.Conn, key PipeCryptKey, salt *Salt) *PipeConn {
+func newConn(c net.Conn, key account.PipeCryptKey, salt *Salt) *PipeConn {
 	if err := c.(*net.TCPConn).SetKeepAlive(true); err != nil {
 		fmt.Println("set keepAlive for consumer connection err:", err)
 		return nil
 	}
+
 	block, err := aes.NewCipher(key[:])
 	if err != nil {
 		fmt.Println("create cipher for connection err:", err)
@@ -62,10 +62,10 @@ func newConn(c net.Conn, key PipeCryptKey, salt *Salt) *PipeConn {
 	}
 
 	return &PipeConn{
-		IV:       salt,
-		JsonConn: &JsonConn{c},
-		Coder:    cipher.NewCFBEncrypter(block, salt[:]),
-		Decoder:  cipher.NewCFBDecrypter(block, salt[:]),
+		IV:      salt,
+		Conn:    c,
+		Coder:   cipher.NewCFBEncrypter(block, salt[:]),
+		Decoder: cipher.NewCFBDecrypter(block, salt[:]),
 	}
 }
 

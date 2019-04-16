@@ -9,11 +9,11 @@ import (
 )
 
 type PayChannel struct {
-	minerID account.ID
-	priKey  ed25519.PrivateKey
-	conn    *service.JsonConn
-	done    chan error
 	sync.RWMutex
+	minerID   account.ID
+	priKey    ed25519.PrivateKey //TODO::
+	conn      *service.JsonConn
+	done      chan error
 	totalUsed int64
 	unSigned  int64
 }
@@ -67,7 +67,7 @@ func (p *PayChannel) signBill(bill *service.PipeBill) (*service.PipeProof, error
 	return proof, nil
 }
 
-func (p *PayChannel) consume(n int) {
+func (p *PayChannel) Consume(n int) {
 	p.Lock()
 	defer p.Unlock()
 	p.unSigned += int64(n)

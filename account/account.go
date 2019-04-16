@@ -138,7 +138,7 @@ func (acc *Account) UnlockAcc(password string) bool {
 	return true
 }
 
-func (acc *Account) CreateAesKey(key *[32]byte, peerAddr string) error {
+func (acc *Account) CreateAesKey(key *PipeCryptKey, peerAddr string) error {
 
 	id, err := ConvertToID(peerAddr)
 	if err != nil {
@@ -148,6 +148,14 @@ func (acc *Account) CreateAesKey(key *[32]byte, peerAddr string) error {
 	peerPub := id.ToPubKey()
 
 	return acc.Key.GenerateAesKey(key, peerPub)
+}
+
+func (acc *Account) Sign(data []byte) []byte {
+	return ed25519.Sign(acc.Key.PriKey, data)
+}
+
+func (acc *Account) Verify(data, sig []byte) bool {
+	return ed25519.Verify(acc.Key.PubKey, data, sig)
 }
 
 func CheckID(address string) bool {

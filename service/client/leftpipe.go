@@ -1,7 +1,6 @@
 package client
 
 import (
-	"fmt"
 	"github.com/youpipe/go-youPipe/service"
 	"net"
 )
@@ -30,9 +29,14 @@ func (p *LeftPipe) collectRequest() {
 
 	for {
 		nr, err := p.proxyConn.Read(p.requestBuf)
-		_, errW := p.consume.WriteCryptData(p.requestBuf[:nr])
-		if errW != nil || err != nil {
-			p.done <- fmt.Errorf("errW:%v, err:%v", errW, err)
+		if nr > 0 {
+			if _, errW := p.consume.WriteCryptData(p.requestBuf[:nr]); errW != nil {
+				p.done <- errW
+				return
+			}
+		}
+		if err != nil {
+			p.done <- err
 			return
 		}
 	}
@@ -44,14 +48,17 @@ func (p *LeftPipe) pullDataFromServer() {
 		n, err := p.consume.ReadCryptData(p.responseBuf)
 
 		if n > 0 {
-			_, errW := p.proxyConn.Write(p.responseBuf[:n])
-			p.done <- errW
-			return
+			if _, errW := p.proxyConn.Write(p.responseBuf[:n]); errW != nil {
+				p.done <- errW
+				return
+			}
 		}
 
 		if err != nil {
 			p.done <- err
+			return
 		}
-		p.consume(n)
+
+		p.PayChannel.Consume(n)
 	}
 }

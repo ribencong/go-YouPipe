@@ -27,14 +27,6 @@ func (conn *JsonConn) Syn(v interface{}) error {
 	return nil
 }
 
-//func (conn *JsonConn) Ack(v interface{}, ) error{
-//
-//
-//	ack := &YouPipeACK{}
-//
-//	return nil
-//}
-
 func (conn *JsonConn) WriteJsonMsg(v interface{}) error {
 
 	data, err := json.Marshal(v)
@@ -76,9 +68,5 @@ func (conn *JsonConn) writeAck(err error) {
 			Message: err.Error(),
 		})
 	}
-
-	_, errW := conn.Write(data)
-	if errW != nil || err != nil {
-		conn.Close()
-	}
+	conn.Write(data)
 }

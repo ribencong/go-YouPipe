@@ -33,6 +33,7 @@ type Key struct {
 	PubKey    ed25519.PublicKey
 	LockedKey []byte
 }
+type PipeCryptKey [32]byte
 
 func AESKey(salt []byte, password string) ([]byte, error) {
 	return scrypt.Key([]byte(password), salt, KP.N, KP.R, KP.P, KP.L)
@@ -69,11 +70,11 @@ func (k *Key) ToNodeId() ID {
 	return ID(AccPrefix + base58.Encode(k.PubKey[:]))
 }
 
-func (k *Key) GenerateAesKey(aesKey *[32]byte, peerPub []byte) error {
+func (k *Key) GenerateAesKey(aesKey *PipeCryptKey, peerPub []byte) error {
 	return GenerateAesKey(aesKey, peerPub, k.PriKey)
 }
 
-func GenerateAesKey(aesKey *[32]byte, peerPub []byte, key ed25519.PrivateKey) error {
+func GenerateAesKey(aesKey *PipeCryptKey, peerPub []byte, key ed25519.PrivateKey) error {
 	var priKey [32]byte
 	var privateKeyBytes [64]byte
 	copy(privateKeyBytes[:], key)
@@ -84,7 +85,7 @@ func GenerateAesKey(aesKey *[32]byte, peerPub []byte, key ed25519.PrivateKey) er
 	if ok := PublicKeyToCurve25519(&curvePub, &pubKey); !ok {
 		return EConvertCurvePubKey
 	}
-	curve25519.ScalarMult(aesKey, &priKey, &curvePub)
+	curve25519.ScalarMult((*[32]byte)(aesKey), &priKey, &curvePub)
 	return nil
 }
 

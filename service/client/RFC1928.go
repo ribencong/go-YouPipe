@@ -465,7 +465,7 @@ type rfcObj struct {
 	conn   io.ReadWriter
 }
 
-func HandShake(conn net.Conn) (*rfcObj, error) {
+func ProxyHandShake(conn net.Conn) (*rfcObj, error) {
 
 	obj := &rfcObj{
 		conn:   conn,
