@@ -33,8 +33,8 @@ type YouPipeACK struct {
 type YPHandShake struct {
 	CmdType PipeCmd
 	Sig     []byte
-	*PipeReqData
-	*LicenseData
+	Pipe    *PipeReqData
+	Lic     *License
 }
 
 type PipeMiner struct {
@@ -93,9 +93,9 @@ func (node *PipeMiner) Serve(conn *JsonConn) {
 	case CmdCheck:
 		node.answerCheck(conn)
 	case CmdPipe:
-		node.pipeServe(conn, hs.Sig, hs.PipeReqData)
+		node.pipeServe(conn, hs.Sig, hs.Pipe)
 	case CmdPayChanel:
-		node.chargeServe(conn, hs.Sig, hs.LicenseData)
+		node.chargeServe(conn, hs.Sig, hs.Lic)
 	}
 }
 
@@ -105,14 +105,13 @@ func (node *PipeMiner) answerCheck(conn *JsonConn) {
 	conn.Close()
 }
 
-func (node *PipeMiner) initCharger(conn *JsonConn, sig []byte, data *LicenseData) (*bandCharger, error) {
+func (node *PipeMiner) initCharger(conn *JsonConn, sig []byte, l *License) (*bandCharger, error) {
 
-	l := &License{
-		Signature:   sig,
-		LicenseData: data,
+	if err := l.VerifySelf(sig); err != nil {
+		return nil, err
 	}
 
-	if err := l.Verify(); err != nil {
+	if err := l.VerifyData(); err != nil {
 		return nil, err
 	}
 
@@ -138,10 +137,10 @@ func (node *PipeMiner) initCharger(conn *JsonConn, sig []byte, data *LicenseData
 	return charger, nil
 }
 
-func (node *PipeMiner) chargeServe(conn *JsonConn, sig []byte, data *LicenseData) {
+func (node *PipeMiner) chargeServe(conn *JsonConn, sig []byte, l *License) {
 	defer conn.Close()
 
-	charger, err := node.initCharger(conn, sig, data)
+	charger, err := node.initCharger(conn, sig, l)
 	conn.writeAck(err)
 	if err != nil {
 		logger.Error(err)
@@ -157,14 +156,9 @@ func (node *PipeMiner) chargeServe(conn *JsonConn, sig []byte, data *LicenseData
 	return
 }
 
-func (node *PipeMiner) initPipe(sig []byte, data *PipeReqData) (net.Conn, *bandCharger, error) {
+func (node *PipeMiner) initPipe(sig []byte, req *PipeReqData) (net.Conn, *bandCharger, error) {
 
-	req := &PipeRequest{
-		Sig:         sig,
-		PipeReqData: data,
-	}
-
-	if !req.Verify() {
+	if !req.Verify(sig) {
 		return nil, nil, fmt.Errorf("signature failed")
 	}
 

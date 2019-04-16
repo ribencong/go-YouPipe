@@ -77,9 +77,9 @@ func (c *Client) pipeHandshake(conn *service.JsonConn, target string) error {
 	sig := c.Sign(data)
 
 	hs := &service.YPHandShake{
-		CmdType:     service.CmdPipe,
-		Sig:         sig,
-		PipeReqData: reqData,
+		CmdType: service.CmdPipe,
+		Sig:     sig,
+		Pipe:    reqData,
 	}
 
 	if err := conn.WriteJsonMsg(hs); err != nil {

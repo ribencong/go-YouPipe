@@ -1,6 +1,7 @@
 package client
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/youpipe/go-youPipe/account"
 	"github.com/youpipe/go-youPipe/service"
@@ -93,19 +94,25 @@ func (c *Client) Running() error {
 }
 
 func (c *Client) createPayChannel() error {
+
 	addr := c.curService.ToPipeAddr()
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		return err
 	}
 
-	jsonConn := &service.JsonConn{Conn: conn}
-	hs := &service.YPHandShake{
-		CmdType:     service.CmdPayChanel,
-		Sig:         c.license.Signature,
-		LicenseData: c.license.LicenseData,
+	data, err := json.Marshal(c.license)
+	if err != nil {
+		return nil
 	}
 
+	hs := &service.YPHandShake{
+		CmdType: service.CmdPayChanel,
+		Sig:     c.Sign(data),
+		Lic:     c.license,
+	}
+
+	jsonConn := &service.JsonConn{Conn: conn}
 	if err := jsonConn.Syn(hs); err != nil {
 		return err
 	}

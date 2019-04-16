@@ -21,19 +21,37 @@ type License struct {
 	*LicenseData
 }
 
-func (l *License) Verify() error {
+func (l *License) VerifySelf(sig []byte) error {
+
+	data, err := json.Marshal(l)
+	if err != nil {
+		return err
+	}
+
+	selfID, err := account.ConvertToID(l.UserAddr)
+	if err != nil {
+		return err
+	}
+
+	if ok := ed25519.Verify(selfID.ToPubKey(), data, sig); !ok {
+		return fmt.Errorf("signature verify self failed")
+	}
+	return nil
+}
+
+func (l *License) VerifyData() error {
 	msg, err := json.Marshal(l.LicenseData)
 	if err != nil {
 		return err
 	}
 
 	if ok := ed25519.Verify(KingFinger.ToPubKey(), msg, l.Signature); !ok {
-		return fmt.Errorf("signature Verify failed")
+		return fmt.Errorf("signature verify data failed")
 	}
 
 	now := time.Now()
 	if now.Before(l.StartDate) || now.After(l.EndDate) {
-		return fmt.Errorf("license time invalid(%s)", l.UserAddr)
+		return fmt.Errorf("Lic time invalid(%s)", l.UserAddr)
 	}
 
 	return nil
@@ -44,7 +62,7 @@ func ParseLicense(data string) (*License, error) {
 	if err := json.Unmarshal([]byte(data), l); err != nil {
 		return nil, err
 	}
-	if err := l.Verify(); err != nil {
+	if err := l.VerifyData(); err != nil {
 		return nil, err
 	}
 	return l, nil

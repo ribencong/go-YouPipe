@@ -13,13 +13,8 @@ type PipeReqData struct {
 	Target string
 }
 
-type PipeRequest struct {
-	Sig []byte
-	*PipeReqData
-}
-
-func (s *PipeRequest) Verify() bool {
-	msg, err := json.Marshal(s.PipeReqData)
+func (s *PipeReqData) Verify(sig []byte) bool {
+	msg, err := json.Marshal(s)
 	if err != nil {
 		return false
 	}
@@ -28,7 +23,7 @@ func (s *PipeRequest) Verify() bool {
 	if err != nil {
 		return false
 	}
-	return ed25519.Verify(pid.ToPubKey(), msg, s.Sig)
+	return ed25519.Verify(pid.ToPubKey(), msg, sig)
 }
 
 func NewPipe(l *PipeConn, r net.Conn, charger *bandCharger) *RightPipe {

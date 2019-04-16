@@ -15,7 +15,7 @@ type ServeNodeId struct {
 	IP string
 }
 
-func (m ServeNodeId) IsOK() bool {
+func (m *ServeNodeId) IsOK() bool {
 	port := m.ID.ToServerPort()
 	addr := network.JoinHostPort(m.IP, port)
 	conn, err := net.Dial("tcp", addr)
@@ -26,12 +26,12 @@ func (m ServeNodeId) IsOK() bool {
 	return true
 }
 
-func (m ServeNodeId) ToPipeAddr() string {
+func (m *ServeNodeId) ToPipeAddr() string {
 	port := m.ID.ToServerPort()
 	return network.JoinHostPort(m.IP, port)
 }
 
-func (m ServeNodeId) ToString() string {
+func (m *ServeNodeId) ToString() string {
 	return strings.Join([]string{m.ID.ToString(), m.IP}, ServeNodeSep)
 }
 
