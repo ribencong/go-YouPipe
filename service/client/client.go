@@ -31,6 +31,32 @@ type Client struct {
 	payCh       *PayChannel
 }
 
+func NewClientWithoutCheck(loalSer string, acc *account.Account,
+	lic *service.License, service YPServices) (*Client, error) {
+
+	ls, err := net.Listen("tcp", loalSer)
+	if err != nil {
+		return nil, err
+	}
+
+	if lic.UserAddr != acc.Address.ToString() {
+		return nil, fmt.Errorf("license and account address are not same")
+	}
+
+	mi := service.RandomService()
+	c := &Client{
+		Account:     acc,
+		proxyServer: ls,
+		serverList:  service,
+		curService:  mi,
+	}
+	if err := c.Key.GenerateAesKey(&c.aesKey, mi.ID.ToPubKey()); err != nil {
+		return nil, err
+	}
+
+	return c, nil
+}
+
 func NewClient(conf *Config, password string) (*Client, error) {
 
 	ls, err := net.Listen("tcp", conf.LocalServer)
@@ -67,8 +93,7 @@ func NewClient(conf *Config, password string) (*Client, error) {
 		curService:  mi,
 	}
 
-	if err := account.GenerateAesKey(&c.aesKey,
-		mi.ID.ToPubKey(), c.Key.PriKey); err != nil {
+	if err := c.Key.GenerateAesKey(&c.aesKey, mi.ID.ToPubKey()); err != nil {
 		return nil, err
 	}
 
