@@ -158,7 +158,7 @@ func (s YPServices) RandomService() *service.ServeNodeId {
 }
 
 func populateService(paths []string) YPServices {
-	s := make(YPServices, 0)
+	s := make(YPServices, len(paths))
 
 	var j = 0
 	for _, path := range paths {

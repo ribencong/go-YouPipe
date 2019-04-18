@@ -79,6 +79,7 @@ func (node *PipeMiner) Mining() {
 	go node.PatrolLicense()
 
 	defer node.serverConn.Close()
+
 	for {
 		conn, err := node.serverConn.Accept()
 		if err != nil {
@@ -96,6 +97,8 @@ func (node *PipeMiner) Serve(conn *JsonConn) {
 		conn.Close()
 		return
 	}
+
+	logger.Debugf("pipe server msg:%v")
 
 	switch hs.CmdType {
 	case CmdCheck:
@@ -116,10 +119,12 @@ func (node *PipeMiner) answerCheck(conn *JsonConn) {
 func (node *PipeMiner) initCharger(conn *JsonConn, sig []byte, l *License) (*bandCharger, error) {
 
 	if err := l.VerifySelf(sig); err != nil {
+		logger.Warning("this license is not from real owner:%s", err)
 		return nil, err
 	}
 
 	if err := l.VerifyData(); err != nil {
+		logger.Warning("this license is not from our king:%s", err)
 		return nil, err
 	}
 
@@ -143,6 +148,7 @@ func (node *PipeMiner) initCharger(conn *JsonConn, sig []byte, l *License) (*ban
 		return nil, err
 	}
 
+	logger.Debug("create charger success:->", l.UserAddr)
 	return charger, nil
 }
 
@@ -162,6 +168,7 @@ func (node *PipeMiner) chargeServe(conn *JsonConn, sig []byte, l *License) {
 
 	node.removeCharger(charger)
 
+	logger.Info("charger exit:->", charger.peerID)
 	return
 }
 

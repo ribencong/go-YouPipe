@@ -30,7 +30,9 @@ func newReceipt() *Receipt {
 	return r
 }
 
+//TODO::make it thread
 func (r *Receipt) DBWork() {
+	logger.Debugf("start database to save receipt ")
 
 	for {
 		proof := <-r.proofs
