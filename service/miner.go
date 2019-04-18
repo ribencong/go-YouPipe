@@ -85,7 +85,7 @@ func (node *PipeMiner) Mining() {
 		if err != nil {
 			panic(err)
 		}
-
+		conn.(*net.TCPConn).SetKeepAlive(true)
 		c := &JsonConn{conn}
 		go node.Serve(c)
 	}
