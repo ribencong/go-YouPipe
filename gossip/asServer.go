@@ -40,7 +40,7 @@ func (n *GNode) processNewConn(conn net.Conn) {
 	}
 
 	if err != nil {
-		logger.Warning("process new conn err:->", err)
+		logger.Notice("process new conn err:->", err)
 	}
 }
 

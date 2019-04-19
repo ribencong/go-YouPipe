@@ -73,7 +73,7 @@ func (c *PipeConn) WriteCryptData(buf []byte) (n int, err error) {
 	if len(buf) == 0 {
 		return
 	}
-	c.Coder.XORKeyStream(buf, buf)
+	//c.Coder.XORKeyStream(buf, buf)
 	n, err = c.Write(buf)
 	return
 }
@@ -84,6 +84,6 @@ func (c *PipeConn) ReadCryptData(buf []byte) (n int, err error) {
 		return
 	}
 	buf = buf[:n]
-	c.Decoder.XORKeyStream(buf, buf)
+	//c.Decoder.XORKeyStream(buf, buf)
 	return
 }

@@ -19,9 +19,7 @@ type PayChannel struct {
 }
 
 func (p *PayChannel) payMonitor() {
-
 	for {
-
 		bill := &service.PipeBill{}
 		if err := p.conn.ReadJsonMsg(bill); err != nil {
 			p.done <- fmt.Errorf("payment channel closed: %v", err)

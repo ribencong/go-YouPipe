@@ -51,6 +51,7 @@ func (p *RightPipe) listenRequest() {
 
 	for {
 		n, err := p.chargeConn.ReadCryptData(p.serverBuf)
+		logger.Debugf("read data from client no:%d, err:%v data:%s", n, err, p.serverBuf[:n])
 		if n > 0 {
 			if _, errW := p.serverConn.Write(p.serverBuf[:n]); errW != nil {
 				return
@@ -67,6 +68,7 @@ func (p *RightPipe) pushBackToClient() {
 
 	for {
 		n, err := p.serverConn.Read(p.serverBuf)
+		logger.Debugf("read data from server no:%d, err:%v data:%s", n, err, p.serverBuf[:n])
 		if n > 0 {
 			if _, errW := p.chargeConn.WriteCryptData(p.serverBuf[:n]); errW != nil {
 				return
