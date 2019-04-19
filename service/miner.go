@@ -137,6 +137,7 @@ func (node *PipeMiner) initCharger(conn *JsonConn, sig []byte, l *License) (*ban
 		peerID:     account.ID(l.UserAddr),
 		bill:       make(chan *PipeBill),
 		checkIn:    make(chan struct{}),
+		done:       make(chan error),
 		peerIPAddr: conn.RemoteAddr().String(),
 	}
 
@@ -162,11 +163,14 @@ func (node *PipeMiner) chargeServe(conn *JsonConn, sig []byte, l *License) {
 
 	node.addCharger(charger)
 
-	node.done <- charger.charging()
+	go charger.waitingReceipt()
+
+	charger.charging()
 
 	node.removeCharger(charger)
 
 	logger.Info("charger exit:->", charger.peerID)
+
 	return
 }
 

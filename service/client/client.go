@@ -149,7 +149,7 @@ func findBestPath(paths []string) *service.ServeNodeId {
 
 	var waiter sync.WaitGroup
 	for _, path := range paths {
-		fmt.Printf("\n conf path (%s)\n", path)
+
 		mi := service.ParseService(path)
 		waiter.Add(1)
 
