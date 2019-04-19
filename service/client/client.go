@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"github.com/youpipe/go-youPipe/account"
 	"github.com/youpipe/go-youPipe/service"
-	"math/rand"
 	"net"
-)
-
-const (
-	MaxMinerSaved = 8
+	"sort"
+	"sync"
+	"time"
 )
 
 type Config struct {
@@ -26,13 +24,12 @@ type Client struct {
 	proxyServer net.Listener
 	aesKey      account.PipeCryptKey
 	license     *service.License
-	serverList  YPServices
 	curService  *service.ServeNodeId
 	payCh       *PayChannel
 }
 
 func NewClientWithoutCheck(loalSer string, acc *account.Account,
-	lic *service.License, service YPServices) (*Client, error) {
+	lic *service.License, server *service.ServeNodeId) (*Client, error) {
 
 	ls, err := net.Listen("tcp", loalSer)
 	if err != nil {
@@ -43,14 +40,12 @@ func NewClientWithoutCheck(loalSer string, acc *account.Account,
 		return nil, fmt.Errorf("license and account address are not same")
 	}
 
-	mi := service.RandomService()
 	c := &Client{
 		Account:     acc,
 		proxyServer: ls,
-		serverList:  service,
-		curService:  mi,
+		curService:  server,
 	}
-	if err := c.Key.GenerateAesKey(&c.aesKey, mi.ID.ToPubKey()); err != nil {
+	if err := c.Key.GenerateAesKey(&c.aesKey, server.ID.ToPubKey()); err != nil {
 		return nil, err
 	}
 
@@ -78,18 +73,15 @@ func NewClient(conf *Config, password string) (*Client, error) {
 		return nil, fmt.Errorf("license and account address are not same")
 	}
 
-	ser := populateService(conf.Services)
-	if len(ser) == 0 {
+	mi := findBestPath(conf.Services)
+	if mi == nil {
 		return nil, fmt.Errorf("no valid service")
 	}
-
-	mi := ser.RandomService()
 
 	c := &Client{
 		Account:     acc,
 		proxyServer: ls,
 		license:     l,
-		serverList:  ser,
 		curService:  mi,
 	}
 
@@ -150,28 +142,41 @@ func (c *Client) Close() {
 
 }
 
-type YPServices []*service.ServeNodeId
+func findBestPath(paths []string) *service.ServeNodeId {
 
-func (s YPServices) RandomService() *service.ServeNodeId {
-	r := rand.Intn(len(s))
-	return s[r]
-}
+	var locker sync.Mutex
+	s := make([]*service.ServeNodeId, 0)
 
-func populateService(paths []string) YPServices {
-	s := make(YPServices, len(paths))
-
-	var j = 0
+	var waiter sync.WaitGroup
 	for _, path := range paths {
+		fmt.Printf("\n conf path (%s)\n", path)
 		mi := service.ParseService(path)
-		if mi == nil || !mi.IsOK() {
-			continue
-		}
+		waiter.Add(1)
 
-		s[j] = mi
-		if j++; j >= MaxMinerSaved {
-			break
-		}
+		go func() {
+			defer waiter.Done()
+			now := time.Now()
+			if mi == nil || !mi.IsOK() {
+				fmt.Printf("\nserver(%s) is invalid\n", mi.IP)
+				return
+			}
+
+			mi.Ping = time.Now().Sub(now)
+			fmt.Printf("\nserver(%s) is ok (%dms)\n", mi.IP, mi.Ping/time.Millisecond)
+			locker.Lock()
+			s = append(s, mi)
+			locker.Unlock()
+		}()
 	}
 
-	return s
+	waiter.Wait()
+
+	if len(s) == 0 {
+		return nil
+	}
+
+	sort.Slice(s, func(i, j int) bool {
+		return s[i].Ping < s[j].Ping
+	})
+	return s[0]
 }

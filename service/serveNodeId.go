@@ -6,21 +6,26 @@ import (
 	"github.com/youpipe/go-youPipe/network"
 	"net"
 	"strings"
+	"time"
 )
 
 const ServeNodeSep = "@"
+const ServeNodeTimeOut = time.Second * 2
 
 type ServeNodeId struct {
-	ID account.ID
-	IP string
+	ID   account.ID
+	IP   string
+	Ping time.Duration
 }
 
 func (m *ServeNodeId) IsOK() bool {
+
 	addr := m.TONetAddr()
-	conn, err := net.Dial("tcp", addr)
+	conn, err := net.DialTimeout("tcp", addr, ServeNodeTimeOut)
 	if err != nil {
 		return false
 	}
+
 	hs := &YPHandShake{
 		CmdType: CmdCheck,
 	}
@@ -74,8 +79,9 @@ func ParseService(path string) *ServeNodeId {
 	}
 
 	mi := &ServeNodeId{
-		ID: id,
-		IP: idIps[1],
+		ID:   id,
+		IP:   idIps[1],
+		Ping: time.Hour, //Default is big value
 	}
 	return mi
 }

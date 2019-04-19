@@ -98,8 +98,6 @@ func (node *PipeMiner) Serve(conn *JsonConn) {
 		return
 	}
 
-	logger.Debugf("pipe server msg:%v")
-
 	switch hs.CmdType {
 	case CmdCheck:
 		node.answerCheck(conn)

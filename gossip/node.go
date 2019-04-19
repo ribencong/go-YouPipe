@@ -70,7 +70,7 @@ func (n *GNode) subscribe() {
 	logger.Debugf("<------Booting %s------>", bootAddr)
 	conn, err := net.DialTimeout("tcp", bootAddr, CommonTCPTimeOut)
 	if err != nil {
-		logger.Warning("boot failed:->", err)
+		logger.Info("boot failed:->", err)
 		return
 	}
 	defer conn.Close()
