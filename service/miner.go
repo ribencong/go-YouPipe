@@ -13,7 +13,7 @@ import (
 var (
 	instance  *PipeMiner = nil
 	once      sync.Once
-	logger, _ = logging.GetLogger(utils.LMService)
+	logger, _ = logging.GetLogger(utils.LMSClient)
 )
 
 type PipeCmd int
@@ -61,6 +61,8 @@ func newMiner() *PipeMiner {
 	if err != nil {
 		logger.Fatalf("YouPipe miner server invalid:%s", err)
 	}
+
+	logger.Infof("Service mining at:%s", addr)
 
 	node := &PipeMiner{
 		done:       make(chan error),
@@ -203,8 +205,9 @@ func (node *PipeMiner) pipeServe(conn *JsonConn, sig []byte, data *PipeReqData) 
 		return
 	}
 
-	producerConn := NewProducerConn(conn, charger.aesKey)
+	producerConn := NewProducerConn(conn.Conn, charger.aesKey)
 	pipe := NewPipe(producerConn, remoteConn, charger)
+	logger.Debugf("new pipe %s", pipe.String())
 
 	go pipe.listenRequest()
 

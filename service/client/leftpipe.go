@@ -1,6 +1,7 @@
 package client
 
 import (
+	"fmt"
 	"github.com/youpipe/go-youPipe/service"
 	"net"
 	"time"
@@ -61,4 +62,10 @@ func (p *LeftPipe) pullDataFromServer() {
 func (p *LeftPipe) expire() {
 	p.consume.SetDeadline(time.Now())
 	p.proxyConn.SetDeadline(time.Now())
+}
+
+func (p *LeftPipe) String() string {
+	return fmt.Sprintf("%s<->%s",
+		p.proxyConn.RemoteAddr().String(),
+		p.consume.RemoteAddr().String())
 }

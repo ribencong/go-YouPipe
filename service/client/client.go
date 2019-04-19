@@ -3,8 +3,10 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/op/go-logging"
 	"github.com/youpipe/go-youPipe/account"
 	"github.com/youpipe/go-youPipe/service"
+	"github.com/youpipe/go-youPipe/utils"
 	"net"
 	"sort"
 	"sync"
@@ -28,13 +30,17 @@ type Client struct {
 	payCh       *PayChannel
 }
 
-func NewClientWithoutCheck(loalSer string, acc *account.Account,
+var logger, _ = logging.GetLogger(utils.LMService)
+
+func NewClientWithoutCheck(localSer string, acc *account.Account,
 	lic *service.License, server *service.ServeNodeId) (*Client, error) {
 
-	ls, err := net.Listen("tcp", loalSer)
+	ls, err := net.Listen("tcp", localSer)
 	if err != nil {
 		return nil, err
 	}
+
+	logger.Debugf("Socks5 proxy server at:%s", localSer)
 
 	if lic.UserAddr != acc.Address.ToString() {
 		return nil, fmt.Errorf("license and account address are not same")
@@ -58,16 +64,19 @@ func NewClient(conf *Config, password string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	logger.Debugf("Socks5 proxy server at:%s", conf.LocalServer)
 
 	acc, err := account.AccFromString(conf.Addr, conf.Cipher, password)
 	if err != nil {
 		return nil, err
 	}
+	logger.Debug("unlock client success:", conf.Addr)
 
 	l, err := service.ParseLicense(conf.License)
 	if err != nil {
 		return nil, err
 	}
+	logger.Debug("parse license success")
 
 	if l.UserAddr != acc.Address.ToString() {
 		return nil, fmt.Errorf("license and account address are not same")
@@ -77,6 +86,8 @@ func NewClient(conf *Config, password string) (*Client, error) {
 	if mi == nil {
 		return nil, fmt.Errorf("no valid service")
 	}
+
+	logger.Debugf("find server:->", mi.ToString())
 
 	c := &Client{
 		Account:     acc,
@@ -89,9 +100,13 @@ func NewClient(conf *Config, password string) (*Client, error) {
 		return nil, err
 	}
 
+	logger.Debug("create aes key success")
+
 	if err := c.createPayChannel(); err != nil {
 		return nil, err
 	}
+	logger.Debug("create payment channel success")
+
 	return c, nil
 }
 

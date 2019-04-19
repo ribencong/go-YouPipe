@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/youpipe/go-youPipe/account"
 	"golang.org/x/crypto/ed25519"
 	"net"
@@ -85,4 +86,10 @@ func (p *RightPipe) pushBackToClient() {
 func (p *RightPipe) expire() {
 	p.chargeConn.SetDeadline(time.Now())
 	p.serverConn.SetDeadline(time.Now())
+}
+
+func (p *RightPipe) String() string {
+	return fmt.Sprintf("%s<->%s",
+		p.chargeConn.RemoteAddr().String(),
+		p.serverConn.RemoteAddr().String())
 }

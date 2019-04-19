@@ -44,6 +44,8 @@ func (c *Client) consume(conn net.Conn) {
 
 	pipe := NewPipe(conn, consumeConn, c.payCh)
 
+	fmt.Printf("new pipe:%s", pipe.String())
+
 	go pipe.collectRequest()
 
 	pipe.pullDataFromServer()

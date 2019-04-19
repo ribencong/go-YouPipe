@@ -11,6 +11,7 @@ const (
 	LMThread  = "thread"
 	LMAccount = "account"
 	LMService = "service"
+	LMSClient = "client"
 	//LMUtils               = "utils"
 	DefaultSystemLogLevel = logging.INFO
 )
@@ -25,6 +26,8 @@ var (
 		LMThread,
 		LMAccount,
 		LMService,
+		LMSClient,
+		//LMUtils,
 	}
 )
 
