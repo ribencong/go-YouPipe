@@ -36,6 +36,8 @@ func NewProducerConn(c net.Conn, key account.PipeCryptKey) *PipeConn {
 		return nil
 	}
 
+	logger.Debugf("read salt:%0x", salt)
+
 	return newConn(c, key, salt)
 }
 
@@ -45,6 +47,13 @@ func NewConsumerConn(c net.Conn, key account.PipeCryptKey) *PipeConn {
 		logger.Error("read salt for consumer connection failed:")
 		return nil
 	}
+
+	if _, err := c.Write(salt[:]); err != nil {
+		logger.Error("Send salt to peer failed:", err)
+		return nil
+	}
+
+	logger.Debugf("send salt:%0x", salt)
 
 	return newConn(c, key, salt)
 }
@@ -73,7 +82,7 @@ func (c *PipeConn) WriteCryptData(buf []byte) (n int, err error) {
 	if len(buf) == 0 {
 		return
 	}
-	//c.Coder.XORKeyStream(buf, buf)
+	c.Coder.XORKeyStream(buf, buf)
 	n, err = c.Write(buf)
 	return
 }
@@ -84,6 +93,6 @@ func (c *PipeConn) ReadCryptData(buf []byte) (n int, err error) {
 		return
 	}
 	buf = buf[:n]
-	//c.Decoder.XORKeyStream(buf, buf)
+	c.Decoder.XORKeyStream(buf, buf)
 	return
 }
