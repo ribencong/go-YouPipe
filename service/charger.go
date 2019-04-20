@@ -18,6 +18,7 @@ type bandCharger struct {
 	sync.RWMutex
 	done       chan error
 	token      int64
+	totalUsed  int64
 	peerID     account.ID
 	bill       chan *PipeBill
 	receipt    chan *PipeProof
@@ -41,6 +42,7 @@ func (c *bandCharger) waitingReceipt() {
 			logger.Error("wrong signature for bandwidth bill:->", proof)
 			continue
 		}
+		c.checkIn <- struct{}{}
 
 		c.fullFill(proof.UsedBandWidth)
 		c.receipt <- proof
@@ -66,19 +68,26 @@ func (c *bandCharger) charging() {
 }
 
 func (c *bandCharger) fullFill(used int64) {
+
 	c.Lock()
 	defer c.Unlock()
-	logger.Noticef("microPay from :%s with :%d and token is:%d", c.peerID.ToString(), used, c.token)
 	c.token += used
-	c.checkIn <- struct{}{}
+	logger.Noticef("microPay from :%s with :%d and token is:%d", c.peerID.ToString(), used, c.token)
 }
 
 func (c *bandCharger) Charge(n int) error {
-	logger.Noticef("(%s)Before charge:token:%d, sub:%d", c.peerID, c.token, n)
+
+	logger.Noticef("(%s)Before charge:token:%d, sub:%d",
+		c.peerID, c.token, n)
 
 	c.Lock()
 	defer c.Unlock()
+
 	c.token -= int64(n)
+	c.totalUsed += int64(n)
+
+	logger.Noticef("(%s)After charge:token:%d, used:%d",
+		c.peerID, c.token, c.totalUsed)
 
 	if c.token > (BandWidthPerToPay / 2) {
 		return nil

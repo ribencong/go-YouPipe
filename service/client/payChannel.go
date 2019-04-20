@@ -63,14 +63,16 @@ func (p *PayChannel) signBill(bill *service.PipeBill) (*service.PipeProof, error
 		return nil, err
 	}
 
+	fmt.Printf("\n\n sign  bill unSigned:%d total:%d", p.unSigned, p.totalUsed)
 	p.unSigned -= bill.UsedBandWidth
 	p.totalUsed += bill.UsedBandWidth
+
 	return proof, nil
 }
 
 func (p *PayChannel) Consume(n int) {
 
-	fmt.Printf(")Before consume:unSigned:%d, use:%d", p.unSigned, n)
+	fmt.Printf("\n\n\t\t\t*****************used:unSigned:%d, consume:%d\n", p.unSigned, n)
 
 	p.Lock()
 	defer p.Unlock()

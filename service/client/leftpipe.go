@@ -47,8 +47,8 @@ func (p *LeftPipe) pullDataFromServer() {
 	for {
 		n, err := p.consume.ReadCryptData(p.responseBuf)
 
-		fmt.Printf("\n\n Pull data(no:%d, err:%v) from server:%s\n", n, err,
-			p.consume.RemoteAddr().String())
+		fmt.Printf("\n\n Pull data(no:%d, err:%v) for(%s)\n", n, err,
+			p.target)
 
 		if n > 0 {
 			if _, errW := p.proxyConn.Write(p.responseBuf[:n]); errW != nil {
