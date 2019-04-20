@@ -3,10 +3,8 @@ package client
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/op/go-logging"
 	"github.com/youpipe/go-youPipe/account"
 	"github.com/youpipe/go-youPipe/service"
-	"github.com/youpipe/go-youPipe/utils"
 	"net"
 	"sort"
 	"sync"
@@ -23,14 +21,13 @@ type Config struct {
 
 type Client struct {
 	*account.Account
+	done        chan error
 	proxyServer net.Listener
 	aesKey      account.PipeCryptKey
 	license     *service.License
 	curService  *service.ServeNodeId
 	payCh       *PayChannel
 }
-
-var logger, _ = logging.GetLogger(utils.LMService)
 
 func NewClientWithoutCheck(localSer string, acc *account.Account,
 	lic *service.License, server *service.ServeNodeId) (*Client, error) {
@@ -40,7 +37,7 @@ func NewClientWithoutCheck(localSer string, acc *account.Account,
 		return nil, err
 	}
 
-	logger.Debugf("Socks5 proxy server at:%s", localSer)
+	fmt.Printf("Socks5 proxy server at:%s", localSer)
 
 	if lic.UserAddr != acc.Address.ToString() {
 		return nil, fmt.Errorf("license and account address are not same")
@@ -48,6 +45,7 @@ func NewClientWithoutCheck(localSer string, acc *account.Account,
 
 	c := &Client{
 		Account:     acc,
+		done:        make(chan error),
 		proxyServer: ls,
 		curService:  server,
 	}
@@ -64,19 +62,19 @@ func NewClient(conf *Config, password string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	logger.Debugf("Socks5 proxy server at:%s", conf.LocalServer)
+	fmt.Printf("\nSocks5 proxy server at:%s", conf.LocalServer)
 
 	acc, err := account.AccFromString(conf.Addr, conf.Cipher, password)
 	if err != nil {
 		return nil, err
 	}
-	logger.Debug("unlock client success:", conf.Addr)
+	fmt.Printf("\nunlock client success:%s", conf.Addr)
 
 	l, err := service.ParseLicense(conf.License)
 	if err != nil {
 		return nil, err
 	}
-	logger.Debug("parse license success")
+	fmt.Println("\nParse license success")
 
 	if l.UserAddr != acc.Address.ToString() {
 		return nil, fmt.Errorf("license and account address are not same")
@@ -87,10 +85,11 @@ func NewClient(conf *Config, password string) (*Client, error) {
 		return nil, fmt.Errorf("no valid service")
 	}
 
-	logger.Debugf("find server:->", mi.ToString())
+	fmt.Printf("\nfind server:%s", mi.ToString())
 
 	c := &Client{
 		Account:     acc,
+		done:        make(chan error),
 		proxyServer: ls,
 		license:     l,
 		curService:  mi,
@@ -100,12 +99,12 @@ func NewClient(conf *Config, password string) (*Client, error) {
 		return nil, err
 	}
 
-	logger.Debug("create aes key success")
+	fmt.Println("\ncreate aes key success")
 
 	if err := c.createPayChannel(); err != nil {
 		return nil, err
 	}
-	logger.Debug("create payment channel success")
+	fmt.Println("\ncreate payment channel success")
 
 	return c, nil
 }
@@ -115,8 +114,13 @@ func (c *Client) Running() error {
 	go c.payCh.payMonitor()
 
 	go c.Proxying()
-	err := <-c.payCh.done
-	return err
+
+	select {
+	case err := <-c.done:
+		return err
+	case err := <-c.payCh.done:
+		return err
+	}
 }
 
 func (c *Client) createPayChannel() error {

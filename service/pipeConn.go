@@ -36,7 +36,7 @@ func NewProducerConn(c net.Conn, key account.PipeCryptKey) *PipeConn {
 		return nil
 	}
 
-	logger.Debugf("read salt:%0x", salt)
+	logger.Debugf("read salt:%0x", salt[:])
 
 	return newConn(c, key, salt)
 }

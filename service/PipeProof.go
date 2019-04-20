@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/youpipe/go-youPipe/account"
+	"github.com/youpipe/go-youPipe/utils"
 	"golang.org/x/crypto/ed25519"
 	"time"
 )
@@ -26,7 +27,15 @@ type PipeBill struct {
 	*Mineral
 }
 
-func (b PipeBill) Verify(addr account.ID) bool {
+func (b *PipeBill) String() string {
+	return fmt.Sprintf("Ver=%d, MinedTime=%s, UsedBandWidth=%d,"+
+		"ConsumerAddr=%s, MinerAddr=%s",
+		b.Ver, b.MinedTime.Format(utils.SysTimeFormat),
+		b.UsedBandWidth, b.ConsumerAddr,
+		b.MinerAddr)
+}
+
+func (b *PipeBill) Verify(addr account.ID) bool {
 	data, err := json.Marshal(b.Mineral)
 	if err != nil {
 		return false

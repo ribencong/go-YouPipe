@@ -9,14 +9,18 @@ import (
 )
 
 func (c *Client) Proxying() {
-	conn, err := c.proxyServer.Accept()
-	if err != nil {
-		fmt.Printf("finish to accept :%s", err)
-		return
-	}
 
-	conn.(*net.TCPConn).SetKeepAlive(true)
-	go c.consume(conn)
+	for {
+		conn, err := c.proxyServer.Accept()
+		if err != nil {
+			c.done <- fmt.Errorf("finish to proxy system request :%s", err)
+			return
+		}
+
+		fmt.Println("New system proxy request:", conn.RemoteAddr().String())
+		conn.(*net.TCPConn).SetKeepAlive(true)
+		go c.consume(conn)
+	}
 }
 
 func (c *Client) consume(conn net.Conn) {
@@ -27,13 +31,16 @@ func (c *Client) consume(conn net.Conn) {
 		fmt.Println("sock5 handshake err:->", err)
 		return
 	}
+	fmt.Println("Proxy handshake success:", obj.target)
 
 	jsonConn, err := c.connectSockServer()
 	if err != nil {
+		fmt.Println("connet to socks server err:%v", err)
 		return
 	}
 
 	if err := c.pipeHandshake(jsonConn, obj.target); err != nil {
+		fmt.Println("forward to server err:%v", err)
 		return
 	}
 
@@ -44,7 +51,7 @@ func (c *Client) consume(conn net.Conn) {
 
 	pipe := NewPipe(conn, consumeConn, c.payCh)
 
-	fmt.Printf("new pipe:%s", pipe.String())
+	fmt.Printf("\nNew pipe:%s", pipe.String())
 
 	go pipe.collectRequest()
 

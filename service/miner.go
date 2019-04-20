@@ -207,7 +207,7 @@ func (node *PipeMiner) pipeServe(conn *JsonConn, sig []byte, data *PipeReqData) 
 
 	producerConn := NewProducerConn(conn.Conn, charger.aesKey)
 	pipe := NewPipe(producerConn, remoteConn, charger)
-	logger.Debugf("new pipe %s", pipe.String())
+	logger.Infof("New pipe %s", pipe.String())
 
 	go pipe.listenRequest()
 
