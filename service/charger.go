@@ -93,7 +93,7 @@ func (c *bandCharger) Charge(n int) error {
 		}
 	case <-time.After(SignBillTimeOut):
 		{
-			logger.Warning("bill for (%s) time out", c.peerID)
+			logger.Warningf("bill for (%s) time out", c.peerID)
 			return fmt.Errorf("time out")
 		}
 	}

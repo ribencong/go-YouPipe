@@ -68,7 +68,7 @@ func NewClient(conf *Config, password string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("\nunlock client success:%s", conf.Addr)
+	fmt.Printf("\nUnlock client success:%s", conf.Addr)
 
 	l, err := service.ParseLicense(conf.License)
 	if err != nil {
@@ -82,7 +82,7 @@ func NewClient(conf *Config, password string) (*Client, error) {
 
 	mi := findBestPath(conf.Services)
 	if mi == nil {
-		return nil, fmt.Errorf("no valid service")
+		return nil, fmt.Errorf("No valid service")
 	}
 
 	fmt.Printf("\nfind server:%s", mi.ToString())

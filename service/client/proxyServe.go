@@ -13,11 +13,11 @@ func (c *Client) Proxying() {
 	for {
 		conn, err := c.proxyServer.Accept()
 		if err != nil {
-			c.done <- fmt.Errorf("finish to proxy system request :%s", err)
+			c.done <- fmt.Errorf("\nFinish to proxy system request :%s", err)
 			return
 		}
 
-		fmt.Println("New system proxy request:", conn.RemoteAddr().String())
+		fmt.Println("\nNew system proxy request:", conn.RemoteAddr().String())
 		conn.(*net.TCPConn).SetKeepAlive(true)
 		go c.consume(conn)
 	}
@@ -28,19 +28,19 @@ func (c *Client) consume(conn net.Conn) {
 
 	obj, err := ProxyHandShake(conn)
 	if err != nil {
-		fmt.Println("sock5 handshake err:->", err)
+		fmt.Println("\nSock5 handshake err:->", err)
 		return
 	}
-	fmt.Println("Proxy handshake success:", obj.target)
+	fmt.Println("\nProxy handshake success:", obj.target)
 
 	jsonConn, err := c.connectSockServer()
 	if err != nil {
-		fmt.Println("connet to socks server err:%v", err)
+		fmt.Println("\nConnet to socks server err:%v\n", err)
 		return
 	}
 
 	if err := c.pipeHandshake(jsonConn, obj.target); err != nil {
-		fmt.Println("forward to server err:%v", err)
+		fmt.Printf("\nForward to server err:%v\n", err)
 		return
 	}
 

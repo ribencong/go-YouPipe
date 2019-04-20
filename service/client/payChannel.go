@@ -27,7 +27,7 @@ func (p *PayChannel) payMonitor() {
 			return
 		}
 
-		fmt.Println("Got new bill:%s", bill.String())
+		fmt.Printf("Got new bill:%s", bill.String())
 
 		proof, err := p.signBill(bill)
 		if err != nil {
@@ -44,7 +44,7 @@ func (p *PayChannel) payMonitor() {
 
 func (p *PayChannel) signBill(bill *service.PipeBill) (*service.PipeProof, error) {
 
-	if ok := bill.Verify(p.minerID); ok {
+	if ok := bill.Verify(p.minerID); !ok {
 		return nil, fmt.Errorf("miner's signature failed")
 	}
 
