@@ -51,9 +51,10 @@ func (p *RightPipe) listenRequest() {
 
 	for {
 		n, err := p.chargeConn.ReadCryptData(p.serverBuf)
-		logger.Debugf("read data from client no:%d, err:%v", n, err)
+		logger.Debugf("request from(%s) to %s", p.peerID, p.serverConn.RemoteAddr().String())
 		if n > 0 {
 			if _, errW := p.serverConn.Write(p.serverBuf[:n]); errW != nil {
+				logger.Warning("forward request err:", errW, p.peerID)
 				return
 			}
 		}
@@ -68,9 +69,10 @@ func (p *RightPipe) pushBackToClient() {
 
 	for {
 		n, err := p.serverConn.Read(p.serverBuf)
-		logger.Debugf("read data from server no:%d, err:%v data:%s", n, err)
+		logger.Debugf("pull data(no:%d, err:%v) for client:%s", n, err, p.peerID)
 		if n > 0 {
 			if _, errW := p.chargeConn.WriteCryptData(p.serverBuf[:n]); errW != nil {
+				logger.Warning("forward response err:", errW, p.peerID)
 				return
 			}
 		}

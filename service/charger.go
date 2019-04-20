@@ -74,6 +74,8 @@ func (c *bandCharger) fullFill(used int64) {
 }
 
 func (c *bandCharger) Charge(n int) error {
+	logger.Debugf("(%s)Before charge:token:%d, sub:%d", c.peerID, c.token, n)
+
 	c.Lock()
 	defer c.Unlock()
 	c.token -= int64(n)
@@ -86,10 +88,12 @@ func (c *bandCharger) Charge(n int) error {
 	select {
 	case <-c.checkIn:
 		{
+			logger.Debug("charge success", c.peerID)
 			return nil
 		}
 	case <-time.After(SignBillTimeOut):
 		{
+			logger.Warning("bill for (%s) time out", c.peerID)
 			return fmt.Errorf("time out")
 		}
 	}
@@ -109,6 +113,7 @@ func createBill(customerAddr string) *PipeBill {
 
 	data, _ := json.Marshal(mi)
 	sig := account.GetAccount().Sign(data)
+	logger.Debugf("New bill:%s", data)
 
 	return &PipeBill{
 		MinerSig: sig,
