@@ -68,19 +68,19 @@ func (c *bandCharger) charging() {
 func (c *bandCharger) fullFill(used int64) {
 	c.Lock()
 	defer c.Unlock()
-	logger.Debugf("microPay from :%s with :%d and token is:%d", c.peerID.ToString(), used, c.token)
+	logger.Noticef("microPay from :%s with :%d and token is:%d", c.peerID.ToString(), used, c.token)
 	c.token += used
 	c.checkIn <- struct{}{}
 }
 
 func (c *bandCharger) Charge(n int) error {
-	logger.Debugf("(%s)Before charge:token:%d, sub:%d", c.peerID, c.token, n)
+	logger.Noticef("(%s)Before charge:token:%d, sub:%d", c.peerID, c.token, n)
 
 	c.Lock()
 	defer c.Unlock()
 	c.token -= int64(n)
 
-	if c.token > BandWidthPerToPay {
+	if c.token > (BandWidthPerToPay / 2) {
 		return nil
 	}
 

@@ -35,7 +35,7 @@ func (c *Client) consume(conn net.Conn) {
 
 	jsonConn, err := c.connectSockServer()
 	if err != nil {
-		fmt.Println("\nConnet to socks server err:%v\n", err)
+		fmt.Printf("\nConnet to socks server err:%v\n", err)
 		return
 	}
 
@@ -49,13 +49,15 @@ func (c *Client) consume(conn net.Conn) {
 		return
 	}
 
-	pipe := NewPipe(conn, consumeConn, c.payCh)
+	pipe := NewPipe(conn, consumeConn, c.payCh, obj.target)
 
 	fmt.Printf("\nNew pipe:%s", pipe.String())
 
 	go pipe.collectRequest()
 
 	pipe.pullDataFromServer()
+
+	fmt.Printf("\n\nPipe for(%s) is closing", pipe.target)
 }
 
 func (c *Client) connectSockServer() (*service.JsonConn, error) {

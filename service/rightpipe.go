@@ -27,9 +27,10 @@ func (s *PipeReqData) Verify(sig []byte) bool {
 	return ed25519.Verify(pid.ToPubKey(), msg, sig)
 }
 
-func NewPipe(l *PipeConn, r net.Conn, charger *bandCharger) *RightPipe {
+func NewPipe(l *PipeConn, r net.Conn, charger *bandCharger, tgt string) *RightPipe {
 
 	return &RightPipe{
+		target:      tgt,
 		mineBuf:     make([]byte, BuffSize),
 		serverBuf:   make([]byte, BuffSize),
 		serverConn:  r,
@@ -39,6 +40,7 @@ func NewPipe(l *PipeConn, r net.Conn, charger *bandCharger) *RightPipe {
 }
 
 type RightPipe struct {
+	target     string
 	mineBuf    []byte
 	serverBuf  []byte
 	serverConn net.Conn
@@ -51,7 +53,7 @@ func (p *RightPipe) listenRequest() {
 
 	for {
 		n, err := p.chargeConn.ReadCryptData(p.serverBuf)
-		logger.Debugf("request from(%s) to %s", p.peerID, p.serverConn.RemoteAddr().String())
+		logger.Debugf("request from(%s) to %s", p.peerID, p.target)
 		if n > 0 {
 			if _, errW := p.serverConn.Write(p.serverBuf[:n]); errW != nil {
 				logger.Warning("forward request err:", errW, p.peerID)

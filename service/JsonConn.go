@@ -51,7 +51,7 @@ func (conn *JsonConn) ReadJsonMsg(v interface{}) error {
 	logger.Debugf("ReadJsonMsg:%s", buffer[:n])
 
 	if err = json.Unmarshal(buffer[:n], v); err != nil {
-		err = fmt.Errorf("unmarshal address:->%v", err)
+		err = fmt.Errorf("unmarshal len:%d buf:%s address:->%v", n, buffer[:n], err)
 		return err
 	}
 	return nil

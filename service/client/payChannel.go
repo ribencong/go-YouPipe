@@ -69,6 +69,9 @@ func (p *PayChannel) signBill(bill *service.PipeBill) (*service.PipeProof, error
 }
 
 func (p *PayChannel) Consume(n int) {
+
+	fmt.Printf(")Before consume:unSigned:%d, use:%d", p.unSigned, n)
+
 	p.Lock()
 	defer p.Unlock()
 	p.unSigned += int64(n)

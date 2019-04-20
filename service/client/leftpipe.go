@@ -9,14 +9,16 @@ import (
 
 type LeftPipe struct {
 	*PayChannel
+	target      string
 	requestBuf  []byte
 	responseBuf []byte
 	proxyConn   net.Conn
 	consume     *service.PipeConn
 }
 
-func NewPipe(l net.Conn, r *service.PipeConn, pay *PayChannel) *LeftPipe {
+func NewPipe(l net.Conn, r *service.PipeConn, pay *PayChannel, tgt string) *LeftPipe {
 	return &LeftPipe{
+		target:      tgt,
 		requestBuf:  make([]byte, service.BuffSize),
 		responseBuf: make([]byte, service.BuffSize),
 		proxyConn:   l,
@@ -44,6 +46,9 @@ func (p *LeftPipe) pullDataFromServer() {
 	defer p.expire()
 	for {
 		n, err := p.consume.ReadCryptData(p.responseBuf)
+
+		fmt.Printf("\n\n Pull data(no:%d, err:%v) from server:%s\n", n, err,
+			p.consume.RemoteAddr().String())
 
 		if n > 0 {
 			if _, errW := p.proxyConn.Write(p.responseBuf[:n]); errW != nil {
