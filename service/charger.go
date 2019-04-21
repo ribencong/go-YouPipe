@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	BandWidthPerToPay = 1 << 22 //4M
-	SignBillTimeOut   = time.Second * 4
+	BandWidthPerToPay = 1 << 23 //8M
+	BillThreshold     = 1 << 21 //2M
+	MaxBandBill       = 4       // (8M/2M)
 )
 
 type bandCharger struct {
@@ -18,11 +19,10 @@ type bandCharger struct {
 	sync.RWMutex
 	done       chan error
 	token      int64
-	totalUsed  int64
+	used       int64
 	peerID     account.ID
 	bill       chan *PipeBill
 	receipt    chan *PipeProof
-	checkIn    chan struct{}
 	peerIPAddr string
 	aesKey     account.PipeCryptKey
 }
@@ -39,10 +39,11 @@ func (c *bandCharger) waitingReceipt() {
 		}
 
 		if !proof.Verify(c.peerID) {
-			logger.Error("wrong signature for bandwidth bill:->", proof)
-			continue
+			err := fmt.Errorf("wrong signature for bandwidth bill:%v", proof)
+			logger.Error(err)
+			c.done <- err
+			return
 		}
-		c.checkIn <- struct{}{}
 
 		c.fullFill(proof.UsedBandWidth)
 		c.receipt <- proof
@@ -76,53 +77,41 @@ func (c *bandCharger) fullFill(used int64) {
 }
 
 func (c *bandCharger) Charge(n int) error {
-
-	logger.Noticef("(%s)Before charge:token:%d, sub:%d",
-		c.peerID, c.token, n)
-
 	c.Lock()
 	defer c.Unlock()
 
 	c.token -= int64(n)
-	c.totalUsed += int64(n)
+	c.used += int64(n)
 
-	logger.Noticef("(%s)After charge:token:%d, used:%d",
-		c.peerID, c.token, c.totalUsed)
+	logger.Debugf("(%s)charged:token:%d, used:%d, toSub:%d",
+		c.peerID, c.token, c.used, n)
 
-	if c.token > (BandWidthPerToPay / 2) {
-		return nil
+	if c.used >= BillThreshold*2 {
+		c.bill <- createBill(c.peerID.ToString(), BillThreshold)
+		c.used -= BillThreshold
 	}
 
-	c.bill <- createBill(c.peerID.ToString())
-	select {
-	case <-c.checkIn:
-		{
-			logger.Debug("charge success", c.peerID)
-			return nil
-		}
-	case <-time.After(SignBillTimeOut):
-		{
-			logger.Warningf("bill for (%s) time out", c.peerID)
-			return fmt.Errorf("time out")
-		}
+	if c.token <= 0 {
+		logger.Warningf("bill for (%s) time out", c.peerID)
+		return fmt.Errorf("time out")
 	}
 
 	return nil
 }
 
-func createBill(customerAddr string) *PipeBill {
+func createBill(customerAddr string, usedBand int64) *PipeBill {
 
 	mi := &Mineral{
 		Ver:           CurrentMineralVer,
 		MinedTime:     time.Now(),
-		UsedBandWidth: BandWidthPerToPay,
+		UsedBandWidth: usedBand,
 		ConsumerAddr:  customerAddr,
 		MinerAddr:     account.GetAccount().Address.ToString(),
 	}
 
 	data, _ := json.Marshal(mi)
 	sig := account.GetAccount().Sign(data)
-	logger.Debugf("New bill:%s", data)
+	logger.Noticef("New bill:%s", data)
 
 	return &PipeBill{
 		MinerSig: sig,

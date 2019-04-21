@@ -13,7 +13,7 @@ import (
 var (
 	instance  *PipeMiner = nil
 	once      sync.Once
-	logger, _ = logging.GetLogger(utils.LMSClient)
+	logger, _ = logging.GetLogger(utils.LMService)
 )
 
 type PipeCmd int
@@ -135,10 +135,9 @@ func (node *PipeMiner) initCharger(conn *JsonConn, sig []byte, l *License) (*ban
 	charger := &bandCharger{
 		JsonConn:   conn,
 		receipt:    node.proofSaver.proofs,
-		token:      BandWidthPerToPay * 2,
+		token:      BandWidthPerToPay,
 		peerID:     account.ID(l.UserAddr),
-		bill:       make(chan *PipeBill),
-		checkIn:    make(chan struct{}),
+		bill:       make(chan *PipeBill, MaxBandBill),
 		done:       make(chan error),
 		peerIPAddr: conn.RemoteAddr().String(),
 	}
