@@ -29,10 +29,12 @@ func NewPipe(l net.Conn, r *service.PipeConn, pay *PayChannel, tgt string) *Left
 
 func (p *LeftPipe) collectRequest() {
 	defer p.expire()
+	defer fmt.Println("collect system proxy conn exit......")
 	for {
 		nr, err := p.proxyConn.Read(p.requestBuf)
 		if nr > 0 {
-			if _, errW := p.consume.WriteCryptData(p.requestBuf[:nr]); errW != nil {
+			if nw, errW := p.consume.WriteCryptData(p.requestBuf[:nr]); errW != nil {
+				fmt.Printf("\n forward system proxy err:%d, %v", nw, errW)
 				return
 			}
 		}
@@ -44,14 +46,15 @@ func (p *LeftPipe) collectRequest() {
 
 func (p *LeftPipe) pullDataFromServer() {
 	defer p.expire()
+	defer fmt.Println("consume conn failed......")
 	for {
 		n, err := p.consume.ReadCryptData(p.responseBuf)
 
-		fmt.Printf("\n\n Pull data(no:%d, err:%v) for(%s)\n", n, err,
-			p.target)
-
+		fmt.Printf("\n\n Pull data(no:%d, err:%v) for(%s) from(%s)\n", n, err,
+			p.target, p.consume.RemoteAddr().String())
 		if n > 0 {
-			if _, errW := p.proxyConn.Write(p.responseBuf[:n]); errW != nil {
+			if nw, errW := p.proxyConn.Write(p.responseBuf[:n]); errW != nil {
+				fmt.Printf("\nwrite data to system proxy err:%d, %v", nw, errW)
 				return
 			}
 		}

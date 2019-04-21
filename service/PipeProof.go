@@ -14,7 +14,7 @@ const (
 )
 
 type Mineral struct {
-	Ver           int
+	ID            int
 	MinedTime     time.Time
 	UsedBandWidth int64
 	ConsumerAddr  string
@@ -28,9 +28,9 @@ type PipeBill struct {
 }
 
 func (b *PipeBill) String() string {
-	return fmt.Sprintf("Ver=%d, MinedTime=%s, UsedBandWidth=%d,"+
+	return fmt.Sprintf("ID=%d, MinedTime=%s, UsedBandWidth=%d,"+
 		"ConsumerAddr=%s, MinerAddr=%s",
-		b.Ver, b.MinedTime.Format(utils.SysTimeFormat),
+		b.ID, b.MinedTime.Format(utils.SysTimeFormat),
 		b.UsedBandWidth, b.ConsumerAddr,
 		b.MinerAddr)
 }

@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"github.com/youpipe/go-youPipe/account"
 	"github.com/youpipe/go-youPipe/service"
+	"github.com/youpipe/go-youPipe/utils"
 	"golang.org/x/crypto/ed25519"
 	"sync"
+	"time"
 )
 
 type PayChannel struct {
@@ -27,7 +29,8 @@ func (p *PayChannel) payMonitor() {
 			return
 		}
 
-		fmt.Printf("Got new bill:%s", bill.String())
+		fmt.Printf("(%s)Got new bill:%s",
+			time.Now().Format(utils.SysTimeFormat), bill.String())
 
 		proof, err := p.signBill(bill)
 		if err != nil {
@@ -52,7 +55,7 @@ func (p *PayChannel) signBill(bill *service.PipeBill) (*service.PipeProof, error
 	defer p.Unlock()
 
 	if bill.UsedBandWidth > p.unSigned {
-		return nil, fmt.Errorf("I don't use so much bandwith user:(%d) unsigned(%d)", bill.UsedBandWidth, p.unSigned)
+		return nil, fmt.Errorf("\n\nI don't use so much bandwith user:(%d) unsigned(%d)", bill.UsedBandWidth, p.unSigned)
 	}
 
 	proof := &service.PipeProof{
@@ -72,7 +75,7 @@ func (p *PayChannel) signBill(bill *service.PipeBill) (*service.PipeProof, error
 
 func (p *PayChannel) Consume(n int) {
 
-	fmt.Printf("\n\n\t\t\t*****************used:unSigned:%d, consume:%d\n", p.unSigned, n)
+	fmt.Printf("\t*******used:unSigned:%d, consume:%d\n", p.unSigned, n)
 
 	p.Lock()
 	defer p.Unlock()

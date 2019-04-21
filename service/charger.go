@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	BandWidthPerToPay = 1 << 23 //8M
-	BillThreshold     = 1 << 21 //2M
-	MaxBandBill       = 4       // (8M/2M)
+	BandWidthPerToPay = 1 << 24 //
+	BillThreshold     = 1 << 22 //
+	MaxBandBill       = 4       //
 )
 
 type bandCharger struct {
@@ -21,6 +21,7 @@ type bandCharger struct {
 	token      int64
 	used       int64
 	peerID     account.ID
+	billID     int
 	bill       chan *PipeBill
 	receipt    chan *PipeProof
 	peerIPAddr string
@@ -87,7 +88,8 @@ func (c *bandCharger) Charge(n int) error {
 		c.peerID, c.token, c.used, n)
 
 	if c.used >= BillThreshold*2 {
-		c.bill <- createBill(c.peerID.ToString(), BillThreshold)
+		c.billID++
+		c.bill <- createBill(c.peerID.ToString(), BillThreshold, c.billID)
 		c.used -= BillThreshold
 	}
 
@@ -99,10 +101,10 @@ func (c *bandCharger) Charge(n int) error {
 	return nil
 }
 
-func createBill(customerAddr string, usedBand int64) *PipeBill {
+func createBill(customerAddr string, usedBand int64, id int) *PipeBill {
 
 	mi := &Mineral{
-		Ver:           CurrentMineralVer,
+		ID:            id,
 		MinedTime:     time.Now(),
 		UsedBandWidth: usedBand,
 		ConsumerAddr:  customerAddr,

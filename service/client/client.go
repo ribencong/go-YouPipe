@@ -82,7 +82,7 @@ func NewClient(conf *Config, password string) (*Client, error) {
 
 	mi := findBestPath(conf.Services)
 	if mi == nil {
-		return nil, fmt.Errorf("No valid service")
+		return nil, fmt.Errorf("no valid service")
 	}
 
 	fmt.Printf("\nfind server:%s", mi.ToString())

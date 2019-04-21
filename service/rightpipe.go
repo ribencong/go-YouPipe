@@ -71,17 +71,20 @@ func (p *RightPipe) pushBackToClient() {
 
 	for {
 		n, err := p.serverConn.Read(p.serverBuf)
-		logger.Debugf("pull data(no:%d, err:%v) for :%s ",
-			n, err, p.target)
+		logger.Debugf("pull data(no:%d, err:%v) for :%s to(%s)",
+			n, err, p.target, p.chargeConn.RemoteAddr().String())
 
 		if n > 0 {
 			nw, errW := p.chargeConn.WriteCryptData(p.serverBuf[:n])
 			if errW != nil {
-				logger.Warning("forward response err:", errW, p.peerID)
+				logger.Warningf("forward (%d-%d) to (%s) response err:%v",
+					n, nw, p.peerID, errW)
 				return
 			}
-
-			logger.Debugf("write to client:%d", nw)
+			if n != nw {
+				logger.Warningf("write to client error:%d-%d", n, nw)
+				return
+			}
 		}
 
 		if err != nil {
