@@ -162,7 +162,7 @@ func (c *Client) createPayChannel() error {
 }
 
 func (c *Client) Close() {
-
+	c.done <- nil
 }
 
 func LoadBootStrap() []string {
@@ -176,13 +176,6 @@ func LoadBootStrap() []string {
 
 	defer resp.Body.Close()
 
-	//body, err := ioutil.ReadAll(resp.Body)
-	//if err != nil {
-	//	// handle error
-	//}
-	//
-	//fmt.Println(string(body))
-	//
 	reader := bufio.NewReader(resp.Body)
 	for {
 		nodeStr, _, err := reader.ReadLine()
