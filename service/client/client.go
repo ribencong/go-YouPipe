@@ -1,13 +1,15 @@
 package client
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/btcsuite/btcutil/base58"
 	"github.com/youpipe/go-youPipe/account"
 	"github.com/youpipe/go-youPipe/service"
-	"io/ioutil"
+	"io"
 	"net"
-	. "net/http"
+	"net/http"
 	"sort"
 	"sync"
 	"time"
@@ -81,7 +83,8 @@ func NewClient(conf *Config, password string) (*Client, error) {
 		return nil, fmt.Errorf("license and account address are not same")
 	}
 
-	mi := findBestPath(conf.Services)
+	services := LoadBootStrap()
+	mi := findBestPath(services)
 	if mi == nil {
 		return nil, fmt.Errorf("no valid service")
 	}
@@ -163,13 +166,40 @@ func (c *Client) Close() {
 }
 
 func LoadBootStrap() []string {
-	resp, err := Get(service.SeedSever)
+	resp, err := http.Get(service.SeedSever)
 	if err != nil {
+		fmt.Println(err)
 		return nil
 	}
 
+	servers := make([]string, 0)
+
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+
+	//body, err := ioutil.ReadAll(resp.Body)
+	//if err != nil {
+	//	// handle error
+	//}
+	//
+	//fmt.Println(string(body))
+	//
+	reader := bufio.NewReader(resp.Body)
+	for {
+		nodeStr, _, err := reader.ReadLine()
+		if err != nil {
+			fmt.Println(err)
+			if err == io.EOF {
+				break
+			} else {
+				continue
+			}
+		}
+
+		nodeId := base58.Decode(string(nodeStr))
+		servers = append(servers, string(nodeId))
+		fmt.Printf("\n%s\n", nodeId)
+	}
+	return servers
 }
 
 func findBestPath(paths []string) *service.ServeNodeId {
