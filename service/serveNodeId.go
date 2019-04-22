@@ -12,6 +12,9 @@ import (
 const ServeNodeSep = "@"
 const ServeNodeTimeOut = time.Second * 2
 
+//const SeedSever  = "https://github.com/ribencong/ypctorrent/blob/master/ypc.torrent"
+const SeedSever = "https://github.com/ribencong/ypctorrent/blob/master/ypc_debug.torrent"
+
 type ServeNodeId struct {
 	ID   account.ID
 	IP   string

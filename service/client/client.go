@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"github.com/youpipe/go-youPipe/account"
 	"github.com/youpipe/go-youPipe/service"
+	"io/ioutil"
 	"net"
+	. "net/http"
 	"sort"
 	"sync"
 	"time"
@@ -16,7 +18,6 @@ type Config struct {
 	Cipher      string
 	LocalServer string
 	License     string
-	Services    []string
 }
 
 type Client struct {
@@ -159,6 +160,16 @@ func (c *Client) createPayChannel() error {
 
 func (c *Client) Close() {
 
+}
+
+func LoadBootStrap() []string {
+	resp, err := Get(service.SeedSever)
+	if err != nil {
+		return nil
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
 }
 
 func findBestPath(paths []string) *service.ServeNodeId {
