@@ -15,11 +15,16 @@ import (
 	"time"
 )
 
+const DefaultSeedSever = "https://raw.githubusercontent.com/ribencong/ypctorrent/master/ypc.torrent"
+
+//const DefaultSeedSever = "https://raw.githubusercontent.com/ribencong/ypctorrent/master/ypc_debug.torrent"
+
 type Config struct {
 	Addr        string
 	Cipher      string
 	LocalServer string
 	License     string
+	SettingUrl  string
 }
 
 type Client struct {
@@ -30,33 +35,6 @@ type Client struct {
 	license     *service.License
 	curService  *service.ServeNodeId
 	payCh       *PayChannel
-}
-
-func NewClientWithoutCheck(localSer string, acc *account.Account,
-	lic *service.License, server *service.ServeNodeId) (*Client, error) {
-
-	ls, err := net.Listen("tcp", localSer)
-	if err != nil {
-		return nil, err
-	}
-
-	fmt.Printf("Socks5 proxy server at:%s", localSer)
-
-	if lic.UserAddr != acc.Address.ToString() {
-		return nil, fmt.Errorf("license and account address are not same")
-	}
-
-	c := &Client{
-		Account:     acc,
-		done:        make(chan error),
-		proxyServer: ls,
-		curService:  server,
-	}
-	if err := c.Key.GenerateAesKey(&c.aesKey, server.ID.ToPubKey()); err != nil {
-		return nil, err
-	}
-
-	return c, nil
 }
 
 func NewClient(conf *Config, password string) (*Client, error) {
@@ -82,8 +60,11 @@ func NewClient(conf *Config, password string) (*Client, error) {
 	if l.UserAddr != acc.Address.ToString() {
 		return nil, fmt.Errorf("license and account address are not same")
 	}
-
-	services := LoadBootStrap()
+	var url = conf.SettingUrl
+	if len(url) == 0 {
+		url = DefaultSeedSever
+	}
+	services := LoadBootStrap(url)
 	mi := findBestPath(services)
 	if mi == nil {
 		return nil, fmt.Errorf("no valid service")
@@ -105,15 +86,15 @@ func NewClient(conf *Config, password string) (*Client, error) {
 
 	fmt.Println("\ncreate aes key success")
 
-	if err := c.createPayChannel(); err != nil {
-		return nil, err
-	}
-	fmt.Println("\ncreate payment channel success")
-
 	return c, nil
 }
 
 func (c *Client) Running() error {
+
+	if err := c.createPayChannel(); err != nil {
+		return err
+	}
+	fmt.Println("\ncreate payment channel success")
 
 	go c.payCh.payMonitor()
 
@@ -165,8 +146,8 @@ func (c *Client) Close() {
 	c.done <- nil
 }
 
-func LoadBootStrap() []string {
-	resp, err := http.Get(service.SeedSever)
+func LoadBootStrap(url string) []string {
+	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Println(err)
 		return nil
