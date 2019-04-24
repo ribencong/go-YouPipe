@@ -54,7 +54,7 @@ func (p *LeftPipe) pullDataFromServer() {
 			p.target, p.consume.RemoteAddr().String())
 		if n > 0 {
 			if nw, errW := p.proxyConn.Write(p.responseBuf[:n]); errW != nil {
-				fmt.Printf("\nwrite data to system proxy err:%d, %v", nw, errW)
+				fmt.Printf("\nwrite data to system proxy err:%d, %v\n", nw, errW)
 				return
 			}
 		}
