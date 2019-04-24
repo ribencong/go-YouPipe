@@ -6,48 +6,37 @@ import (
 	"github.com/youpipe/go-youPipe/service"
 	"github.com/youpipe/go-youPipe/utils"
 	"golang.org/x/crypto/ed25519"
-	"sync"
 	"time"
 )
 
-type PayChannel struct {
-	sync.RWMutex
-	minerID   account.ID
-	priKey    ed25519.PrivateKey //TODO::
-	conn      *service.JsonConn
-	done      chan error
-	totalUsed int64
-	unSigned  int64
-}
-
-func (p *PayChannel) payMonitor() {
+func (c *Client) payMonitor() {
 
 	for {
 		bill := &service.PipeBill{}
-		if err := p.conn.ReadJsonMsg(bill); err != nil {
-			p.done <- fmt.Errorf("payment channel closed: %v", err)
+		if err := c.payConn.ReadJsonMsg(bill); err != nil {
+			c.fatalErr <- fmt.Errorf("payment channel closed: %v", err)
 			return
 		}
 
 		fmt.Printf("(%s)Got new bill:%s",
 			time.Now().Format(utils.SysTimeFormat), bill.String())
 
-		proof, err := p.signBill(bill)
+		proof, err := c.signBill(bill, c.curService.ID, c.Key.PriKey)
 		if err != nil {
-			p.done <- err
+			c.fatalErr <- err
 			return
 		}
 
-		if err := p.conn.WriteJsonMsg(proof); err != nil {
-			p.done <- err
+		if err := c.payConn.WriteJsonMsg(proof); err != nil {
+			c.fatalErr <- err
 			return
 		}
 	}
 }
 
-func (p *PayChannel) signBill(bill *service.PipeBill) (*service.PipeProof, error) {
+func (p *FlowCounter) signBill(bill *service.PipeBill, minerId account.ID, priKey ed25519.PrivateKey) (*service.PipeProof, error) {
 
-	if ok := bill.Verify(p.minerID); !ok {
+	if ok := bill.Verify(minerId); !ok {
 		return nil, fmt.Errorf("miner's signature failed")
 	}
 
@@ -62,7 +51,7 @@ func (p *PayChannel) signBill(bill *service.PipeBill) (*service.PipeProof, error
 		PipeBill: bill,
 	}
 
-	if err := proof.Sign(p.priKey); err != nil {
+	if err := proof.Sign(priKey); err != nil {
 		return nil, err
 	}
 
@@ -73,11 +62,12 @@ func (p *PayChannel) signBill(bill *service.PipeBill) (*service.PipeProof, error
 	return proof, nil
 }
 
-func (p *PayChannel) Consume(n int) {
+func (p *FlowCounter) Consume(n int) {
 
 	fmt.Printf("\t*******used:unSigned:%d, consume:%d\n", p.unSigned, n)
 
 	p.Lock()
 	defer p.Unlock()
+
 	p.unSigned += int64(n)
 }

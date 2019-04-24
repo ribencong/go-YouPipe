@@ -8,7 +8,7 @@ import (
 )
 
 type LeftPipe struct {
-	*PayChannel
+	*FlowCounter
 	target      string
 	requestBuf  []byte
 	responseBuf []byte
@@ -16,14 +16,14 @@ type LeftPipe struct {
 	consume     *service.PipeConn
 }
 
-func NewPipe(l net.Conn, r *service.PipeConn, pay *PayChannel, tgt string) *LeftPipe {
+func NewPipe(l net.Conn, r *service.PipeConn, pay *FlowCounter, tgt string) *LeftPipe {
 	return &LeftPipe{
 		target:      tgt,
 		requestBuf:  make([]byte, service.BuffSize),
 		responseBuf: make([]byte, service.BuffSize),
 		proxyConn:   l,
 		consume:     r,
-		PayChannel:  pay,
+		FlowCounter: pay,
 	}
 }
 
@@ -63,7 +63,11 @@ func (p *LeftPipe) pullDataFromServer() {
 			return
 		}
 
-		p.PayChannel.Consume(n)
+		if p.closed {
+			return
+		}
+
+		p.FlowCounter.Consume(n)
 	}
 }
 

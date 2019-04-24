@@ -26,15 +26,24 @@ type Config struct {
 	License     string
 	SettingUrl  string
 }
+type FlowCounter struct {
+	sync.RWMutex
+	closed    bool
+	totalUsed int64
+	unSigned  int64
+}
 
 type Client struct {
 	*account.Account
-	done        chan error
+	*FlowCounter
+	fatalErr chan error
+
 	proxyServer net.Listener
-	aesKey      account.PipeCryptKey
-	license     *service.License
-	curService  *service.ServeNodeId
-	payCh       *PayChannel
+	payConn     *service.JsonConn
+
+	aesKey     account.PipeCryptKey
+	license    *service.License
+	curService *service.ServeNodeId
 }
 
 func NewClient(conf *Config, password string) (*Client, error) {
@@ -65,7 +74,7 @@ func NewClient(conf *Config, password string) (*Client, error) {
 		url = DefaultSeedSever
 	}
 	services := LoadBootStrap(url)
-	mi := findBestPath(services)
+	mi := FindBestPath(services)
 	if mi == nil {
 		return nil, fmt.Errorf("no valid service")
 	}
@@ -74,7 +83,7 @@ func NewClient(conf *Config, password string) (*Client, error) {
 
 	c := &Client{
 		Account:     acc,
-		done:        make(chan error),
+		fatalErr:    make(chan error, 5),
 		proxyServer: ls,
 		license:     l,
 		curService:  mi,
@@ -94,17 +103,20 @@ func (c *Client) Running() error {
 	if err := c.createPayChannel(); err != nil {
 		return err
 	}
+
 	fmt.Println("\ncreate payment channel success")
 
-	go c.payCh.payMonitor()
+	go c.payMonitor()
 
-	go c.Proxying()
+	for {
+		conn, err := c.proxyServer.Accept()
+		if err != nil {
+			return fmt.Errorf("\nFinish to proxy system request :%s", err)
+		}
 
-	select {
-	case err := <-c.done:
-		return err
-	case err := <-c.payCh.done:
-		return err
+		fmt.Println("\nNew system proxy request:", conn.RemoteAddr().String())
+		conn.(*net.TCPConn).SetKeepAlive(true)
+		go c.consume(conn)
 	}
 }
 
@@ -132,18 +144,17 @@ func (c *Client) createPayChannel() error {
 		return err
 	}
 
-	c.payCh = &PayChannel{
-		conn:    jsonConn,
-		done:    make(chan error),
-		minerID: c.curService.ID,
-		priKey:  c.Key.PriKey,
-	}
+	c.payConn = jsonConn
 
+	c.FlowCounter = &FlowCounter{}
 	return nil
 }
 
 func (c *Client) Close() {
-	c.done <- nil
+	c.fatalErr <- nil
+	c.FlowCounter.closed = true
+	c.payConn.Close()
+	c.proxyServer.Close()
 }
 
 func LoadBootStrap(url string) []string {
@@ -176,7 +187,7 @@ func LoadBootStrap(url string) []string {
 	return servers
 }
 
-func findBestPath(paths []string) *service.ServeNodeId {
+func FindBestPath(paths []string) *service.ServeNodeId {
 
 	var locker sync.Mutex
 	s := make([]*service.ServeNodeId, 0)

@@ -8,21 +8,6 @@ import (
 	"net"
 )
 
-func (c *Client) Proxying() {
-
-	for {
-		conn, err := c.proxyServer.Accept()
-		if err != nil {
-			c.done <- fmt.Errorf("\nFinish to proxy system request :%s", err)
-			return
-		}
-
-		fmt.Println("\nNew system proxy request:", conn.RemoteAddr().String())
-		conn.(*net.TCPConn).SetKeepAlive(true)
-		go c.consume(conn)
-	}
-}
-
 func (c *Client) consume(conn net.Conn) {
 	defer conn.Close()
 
@@ -49,7 +34,7 @@ func (c *Client) consume(conn net.Conn) {
 		return
 	}
 
-	pipe := NewPipe(conn, consumeConn, c.payCh, obj.target)
+	pipe := NewPipe(conn, consumeConn, c.FlowCounter, obj.target)
 
 	fmt.Printf("\nNew pipe:%s", pipe.String())
 
