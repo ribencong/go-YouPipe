@@ -10,7 +10,6 @@ import (
 )
 
 func (c *Client) payMonitor() {
-
 	for {
 		bill := &service.PipeBill{}
 		if err := c.payConn.ReadJsonMsg(bill); err != nil {
