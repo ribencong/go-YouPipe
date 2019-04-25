@@ -101,14 +101,15 @@ func NewClient(conf *Config, password string) (*Client, error) {
 func (c *Client) Running() error {
 
 	defer c.proxyServer.Close()
-	defer c.payConn.Close()
-	defer func() {
-		c.FlowCounter.closed = true
-	}()
 
 	if err := c.createPayChannel(); err != nil {
 		return err
 	}
+
+	defer c.payConn.Close()
+	defer func() {
+		c.FlowCounter.closed = true
+	}()
 
 	fmt.Println("\ncreate payment channel success")
 
