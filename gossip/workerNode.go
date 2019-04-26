@@ -3,8 +3,8 @@ package gossip
 import (
 	"context"
 	"fmt"
-	"github.com/youpipe/go-youPipe/pbs"
-	"github.com/youpipe/go-youPipe/thread"
+	"github.com/ribencong/go-youPipe/pbs"
+	"github.com/ribencong/go-youPipe/thread"
 	"math/rand"
 	"net"
 )

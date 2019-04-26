@@ -2,9 +2,9 @@ package core
 
 import (
 	"github.com/golang/protobuf/proto"
-	"github.com/youpipe/go-youPipe/gossip"
-	"github.com/youpipe/go-youPipe/pbs"
-	"github.com/youpipe/go-youPipe/thread"
+	"github.com/ribencong/go-youPipe/gossip"
+	"github.com/ribencong/go-youPipe/pbs"
+	"github.com/ribencong/go-youPipe/thread"
 	"time"
 )
 

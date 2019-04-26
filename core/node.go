@@ -2,9 +2,9 @@ package core
 
 import (
 	"github.com/op/go-logging"
-	"github.com/youpipe/go-youPipe/gossip"
-	"github.com/youpipe/go-youPipe/service"
-	"github.com/youpipe/go-youPipe/utils"
+	"github.com/ribencong/go-youPipe/gossip"
+	"github.com/ribencong/go-youPipe/service"
+	"github.com/ribencong/go-youPipe/utils"
 	"sync"
 )
 

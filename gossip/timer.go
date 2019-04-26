@@ -1,7 +1,7 @@
 package gossip
 
 import (
-	"github.com/youpipe/go-youPipe/thread"
+	"github.com/ribencong/go-youPipe/thread"
 	"time"
 )
 

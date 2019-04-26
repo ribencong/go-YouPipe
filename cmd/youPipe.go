@@ -3,9 +3,9 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/ribencong/go-youPipe/core"
+	"github.com/ribencong/go-youPipe/pbs"
 	"github.com/spf13/cobra"
-	"github.com/youpipe/go-youPipe/core"
-	"github.com/youpipe/go-youPipe/pbs"
 )
 
 var adminParam = struct {

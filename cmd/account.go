@@ -2,10 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/ribencong/go-youPipe/account"
+	"github.com/ribencong/go-youPipe/core"
+	"github.com/ribencong/go-youPipe/utils"
 	"github.com/spf13/cobra"
-	"github.com/youpipe/go-youPipe/account"
-	"github.com/youpipe/go-youPipe/core"
-	"github.com/youpipe/go-youPipe/utils"
 	"golang.org/x/crypto/ssh/terminal"
 )
 

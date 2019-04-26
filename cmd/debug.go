@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/op/go-logging"
+	"github.com/ribencong/go-youPipe/core"
+	"github.com/ribencong/go-youPipe/pbs"
+	"github.com/ribencong/go-youPipe/thread"
+	"github.com/ribencong/go-youPipe/utils"
 	"github.com/spf13/cobra"
-	"github.com/youpipe/go-youPipe/core"
-	"github.com/youpipe/go-youPipe/pbs"
-	"github.com/youpipe/go-youPipe/thread"
-	"github.com/youpipe/go-youPipe/utils"
 )
 
 /************************************************************************

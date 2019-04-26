@@ -2,7 +2,7 @@
 
 A implementation of Shadowsocks with Block Chain in Go.
 
-GoDoc at https://godoc.org/github.com/youpipe/go-youPipe/
+GoDoc at https://godoc.org/github.com/ribencong/go-youPipe/
 
 
 ## Features
@@ -17,12 +17,12 @@ GoDoc at https://godoc.org/github.com/youpipe/go-youPipe/
 
 ## Install
 
-Pre-built binaries for common platforms are available at https://github.com/youpipe/go-youPipe/releases
+Pre-built binaries for common platforms are available at https://github.com/ribencong/go-youPipe/releases
 
 Install from source
 
 ```sh
-go get -u -v github.com/youpipe/go-youPipe
+go get -u -v github.com/ribencong/go-youPipe
 ```
 
 

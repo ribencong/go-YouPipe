@@ -3,7 +3,7 @@ package thread
 import (
 	"context"
 	"fmt"
-	"github.com/youpipe/go-youPipe/utils"
+	"github.com/ribencong/go-youPipe/utils"
 	"sync"
 	"time"
 )

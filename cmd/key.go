@@ -3,9 +3,9 @@ package cmd
 import (
 	"fmt"
 	"github.com/btcsuite/btcutil/base58"
+	"github.com/ribencong/go-youPipe/account"
+	"github.com/ribencong/go-youPipe/utils"
 	"github.com/spf13/cobra"
-	"github.com/youpipe/go-youPipe/account"
-	"github.com/youpipe/go-youPipe/utils"
 )
 
 var keyCmd = &cobra.Command{

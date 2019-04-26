@@ -2,8 +2,8 @@ package service
 
 import (
 	"fmt"
-	"github.com/youpipe/go-youPipe/account"
-	"github.com/youpipe/go-youPipe/network"
+	"github.com/ribencong/go-youPipe/account"
+	"github.com/ribencong/go-youPipe/network"
 	"net"
 	"strings"
 	"time"

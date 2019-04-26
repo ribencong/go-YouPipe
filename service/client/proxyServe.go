@@ -3,8 +3,8 @@ package client
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/youpipe/go-youPipe/network"
-	"github.com/youpipe/go-youPipe/service"
+	"github.com/ribencong/go-youPipe/network"
+	"github.com/ribencong/go-youPipe/service"
 	"net"
 )
 

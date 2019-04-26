@@ -3,9 +3,9 @@ package service
 import (
 	"fmt"
 	"github.com/op/go-logging"
-	"github.com/youpipe/go-youPipe/account"
-	"github.com/youpipe/go-youPipe/network"
-	"github.com/youpipe/go-youPipe/utils"
+	"github.com/ribencong/go-youPipe/account"
+	"github.com/ribencong/go-youPipe/network"
+	"github.com/ribencong/go-youPipe/utils"
 	"net"
 	"sync"
 )

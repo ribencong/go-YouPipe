@@ -2,9 +2,9 @@ package client
 
 import (
 	"fmt"
-	"github.com/youpipe/go-youPipe/account"
-	"github.com/youpipe/go-youPipe/service"
-	"github.com/youpipe/go-youPipe/utils"
+	"github.com/ribencong/go-youPipe/account"
+	"github.com/ribencong/go-youPipe/service"
+	"github.com/ribencong/go-youPipe/utils"
 	"golang.org/x/crypto/ed25519"
 	"time"
 )

@@ -3,8 +3,8 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/youpipe/go-youPipe/account"
-	"github.com/youpipe/go-youPipe/utils"
+	"github.com/ribencong/go-youPipe/account"
+	"github.com/ribencong/go-youPipe/utils"
 	"golang.org/x/crypto/ed25519"
 	"time"
 )

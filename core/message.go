@@ -2,8 +2,8 @@ package core
 
 import (
 	"fmt"
-	"github.com/youpipe/go-youPipe/gossip"
-	"github.com/youpipe/go-youPipe/pbs"
+	"github.com/ribencong/go-youPipe/gossip"
+	"github.com/ribencong/go-youPipe/pbs"
 )
 
 const (

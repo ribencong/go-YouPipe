@@ -2,7 +2,7 @@ package client
 
 import (
 	"fmt"
-	"github.com/youpipe/go-youPipe/service"
+	"github.com/ribencong/go-youPipe/service"
 	"net"
 	"time"
 )

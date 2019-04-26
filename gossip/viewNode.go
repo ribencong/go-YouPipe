@@ -2,7 +2,7 @@ package gossip
 
 import (
 	"fmt"
-	"github.com/youpipe/go-youPipe/utils"
+	"github.com/ribencong/go-youPipe/utils"
 	"net"
 	"sync"
 	"time"

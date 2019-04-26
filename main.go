@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/youpipe/go-youPipe/cmd"
+	"github.com/ribencong/go-youPipe/cmd"
 )
 
 func main() {

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/golang/protobuf/proto"
-	"github.com/youpipe/go-youPipe/pbs"
+	"github.com/ribencong/go-youPipe/pbs"
 	"io"
 	"net"
 	"time"

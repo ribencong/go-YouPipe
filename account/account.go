@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/op/go-logging"
-	"github.com/youpipe/go-youPipe/utils"
+	"github.com/ribencong/go-youPipe/utils"
 	"golang.org/x/crypto/ed25519"
 	"io/ioutil"
 	"os"
