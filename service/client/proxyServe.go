@@ -16,7 +16,7 @@ func (c *Client) consume(conn net.Conn) {
 		fmt.Println("\nSock5 handshake err:->", err)
 		return
 	}
-	fmt.Println("\nProxy handshake success:", obj.target)
+	fmt.Println("\nProxy handshake success:", obj.Target)
 
 	jsonConn, err := c.connectSockServer()
 	if err != nil {
@@ -24,7 +24,7 @@ func (c *Client) consume(conn net.Conn) {
 		return
 	}
 
-	if err := c.pipeHandshake(jsonConn, obj.target); err != nil {
+	if err := c.pipeHandshake(jsonConn, obj.Target); err != nil {
 		fmt.Printf("\nForward to server err:%v\n", err)
 		return
 	}
@@ -34,7 +34,7 @@ func (c *Client) consume(conn net.Conn) {
 		return
 	}
 
-	pipe := NewPipe(conn, consumeConn, c.FlowCounter, obj.target)
+	pipe := NewPipe(conn, consumeConn, c.FlowCounter, obj.Target)
 
 	fmt.Printf("\nNew pipe:%s", pipe.String())
 

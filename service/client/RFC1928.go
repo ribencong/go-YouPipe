@@ -212,7 +212,7 @@ func (obj *rfcObj) request() (err error) {
 	port := strconv.Itoa((int(obj.buffer[addLen]) << 8) |
 		int(obj.buffer[addLen+1]))
 
-	obj.target = net.JoinHostPort(host, port)
+	obj.Target = net.JoinHostPort(host, port)
 	return
 }
 
@@ -253,7 +253,7 @@ Where:
    encapsulated in the method-dependent encapsulation.
 CONNECT
    In the reply to a CONNECT, BND.PORT contains the port number that the
-   server assigned to connect to the target host, while BND.ADDR
+   server assigned to connect to the Target host, while BND.ADDR
    contains the associated IP address.  The supplied BND.ADDR is often
    different from the IP address that the client uses to reach the SOCKS
    server, since such servers are often multi-homed.  It is expected
@@ -460,7 +460,7 @@ const MaxAddrLen = 1 + 1 + 255 + 2
 
 type rfcObj struct {
 	cmd    byte
-	target string
+	Target string
 	buffer []byte
 	conn   io.ReadWriter
 }
