@@ -14,7 +14,7 @@ const (
 
 var SystemTimeLoc *time.Location
 
-func init() {
+func InitUtils() {
 	baseDir := SysBaseDir()
 	SystemTimeLoc, _ = time.LoadLocation("Asia/Shanghai")
 
@@ -23,6 +23,8 @@ func init() {
 	SysConf.AccDataPath = filepath.Join(baseDir, string(filepath.Separator), "acc.data")
 	SysConf.PidPath = filepath.Join(baseDir, string(filepath.Separator), "pid")
 	SysConf.ReceiptPath = filepath.Join(baseDir, string(filepath.Separator), "receipt")
+
+	initLog()
 }
 
 type SysConfig struct {
