@@ -12,7 +12,7 @@ const (
 	CmdServicePort = "52019"
 )
 
-var SystemTimeLoc *time.Location
+var SystemTimeLoc, _ = time.LoadLocation("Asia/Shanghai")
 
 func InitUtils() {
 	baseDir := SysBaseDir()
