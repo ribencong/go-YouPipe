@@ -75,7 +75,7 @@ func (l *License) VerifyData() error {
 		return fmt.Errorf("lic time expired(%s)", l.UserAddr)
 	}
 	if time.Time(l.StartDate).After(now) {
-		return fmt.Errorf("lic time doesn't starte(%s)", l.UserAddr)
+		return fmt.Errorf("lic time doesn't started(%s)", l.UserAddr)
 	}
 
 	return nil
