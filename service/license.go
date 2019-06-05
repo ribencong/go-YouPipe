@@ -4,33 +4,30 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ribencong/go-youPipe/account"
+	"github.com/ribencong/go-youPipe/utils"
 	"golang.org/x/crypto/ed25519"
 	"time"
 )
 
 const KingFinger = account.ID("YP5rttHPzRsAe2RmF52sLzbBk4jpoPwJLtABaMv6qn7kVm")
 
-var SystemTimeLoc, _ = time.LoadLocation("Asia/Shanghai")
-
-const SysTimeFormat = "2006-01-02 15:04:05"
-
 type JsonTime time.Time
 
 func (jt JsonTime) MarshalJSON() ([]byte, error) {
-	b := make([]byte, 0, len(SysTimeFormat)+2)
+	b := make([]byte, 0, len(utils.SysTimeFormat)+2)
 	b = append(b, '"')
-	b = time.Time(jt).AppendFormat(b, SysTimeFormat)
+	b = time.Time(jt).AppendFormat(b, utils.SysTimeFormat)
 	b = append(b, '"')
 	return b, nil
 }
 func (jt *JsonTime) UnmarshalJSON(b []byte) error {
-	t, err := time.ParseInLocation(`"`+SysTimeFormat+`"`, string(b), SystemTimeLoc)
+	t, err := time.ParseInLocation(`"`+utils.SysTimeFormat+`"`, string(b), time.UTC)
 	*jt = JsonTime(t)
 	return err
 }
 
 func (jt JsonTime) String() string {
-	return time.Time(jt).Format(SysTimeFormat)
+	return time.Time(jt).Format(utils.SysTimeFormat)
 }
 
 type LicenseData struct {
@@ -72,7 +69,7 @@ func (l *License) VerifyData() error {
 		return fmt.Errorf("signature verify data failed")
 	}
 
-	now := time.Now().In(SystemTimeLoc)
+	now := time.Now().In(time.UTC)
 
 	if time.Time(l.EndDate).Before(now) {
 		return fmt.Errorf("lic time expired(%s)", l.UserAddr)
