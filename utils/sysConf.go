@@ -12,8 +12,6 @@ const (
 	CmdServicePort = "52019"
 )
 
-var SystemTimeLoc, _ = time.LoadLocation("Asia/Shanghai")
-
 func InitUtils() {
 	baseDir := SysBaseDir()
 	SysConf.ConfPath = filepath.Join(baseDir, string(filepath.Separator), "conf.json")
