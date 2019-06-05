@@ -3,7 +3,6 @@ package utils
 import (
 	"fmt"
 	"path/filepath"
-	"time"
 )
 
 const (
