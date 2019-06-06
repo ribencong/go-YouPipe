@@ -3,7 +3,6 @@ package utils
 import (
 	"fmt"
 	"path/filepath"
-	"time"
 )
 
 const (
@@ -12,12 +11,8 @@ const (
 	CmdServicePort = "52019"
 )
 
-var SystemTimeLoc, _ = time.LoadLocation("Asia/Shanghai")
-
 func InitUtils() {
 	baseDir := SysBaseDir()
-	SystemTimeLoc, _ = time.LoadLocation("Asia/Shanghai")
-
 	SysConf.ConfPath = filepath.Join(baseDir, string(filepath.Separator), "conf.json")
 	SysConf.LogPath = filepath.Join(baseDir, string(filepath.Separator), "yp.log")
 	SysConf.AccDataPath = filepath.Join(baseDir, string(filepath.Separator), "acc.data")

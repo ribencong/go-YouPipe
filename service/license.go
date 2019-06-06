@@ -21,7 +21,7 @@ func (jt JsonTime) MarshalJSON() ([]byte, error) {
 	return b, nil
 }
 func (jt *JsonTime) UnmarshalJSON(b []byte) error {
-	t, err := time.ParseInLocation(`"`+utils.SysTimeFormat+`"`, string(b), utils.SystemTimeLoc)
+	t, err := time.ParseInLocation(`"`+utils.SysTimeFormat+`"`, string(b), time.UTC)
 	*jt = JsonTime(t)
 	return err
 }
@@ -69,13 +69,13 @@ func (l *License) VerifyData() error {
 		return fmt.Errorf("signature verify data failed")
 	}
 
-	now := time.Now().In(utils.SystemTimeLoc)
+	now := time.Now().In(time.UTC)
 
 	if time.Time(l.EndDate).Before(now) {
 		return fmt.Errorf("lic time expired(%s)", l.UserAddr)
 	}
 	if time.Time(l.StartDate).After(now) {
-		return fmt.Errorf("lic time doesn't starte(%s)", l.UserAddr)
+		return fmt.Errorf("lic time doesn't started(%s)", l.UserAddr)
 	}
 
 	return nil

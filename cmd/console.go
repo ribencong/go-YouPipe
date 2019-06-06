@@ -66,9 +66,7 @@ func init() {
 }
 
 func Execute() {
-
 	utils.InitUtils()
-
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -163,7 +161,7 @@ func waitSignal(done chan bool) {
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh,
-		syscall.SIGHUP,
+		//syscall.SIGHUP,
 		syscall.SIGINT,
 		syscall.SIGTERM,
 		syscall.SIGQUIT)
