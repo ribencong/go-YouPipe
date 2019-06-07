@@ -1,1 +1,1 @@
-{"currentVer":"0.1.0","service":{"accessPoint":"0.0.0.0"},"gossip":{"expire":86400000000000},"network":{"bootStrap":"192.168.1.108"}}
+{"currentVer":"0.1.0","service":{"accessPoint":"0.0.0.0"},"gossip":{"expire":86400000000000},"network":{"bootStrap":"192.168.103.101"}}

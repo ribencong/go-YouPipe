@@ -45,6 +45,7 @@ func (conn *JsonConn) ReadJsonMsg(v interface{}) error {
 	n, err := conn.Read(buffer)
 	if err != nil {
 		err = fmt.Errorf("failed to read request:->%v", err)
+		logger.Error(err)
 		return err
 	}
 
@@ -52,6 +53,7 @@ func (conn *JsonConn) ReadJsonMsg(v interface{}) error {
 
 	if err = json.Unmarshal(buffer[:n], v); err != nil {
 		err = fmt.Errorf("unmarshal len:%d buf:%s address:->%v", n, buffer[:n], err)
+		logger.Error(err)
 		return err
 	}
 	return nil

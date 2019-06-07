@@ -96,6 +96,7 @@ func (node *PipeMiner) Mining() {
 func (node *PipeMiner) Serve(conn *JsonConn) {
 	hs := &YPHandShake{}
 	if err := conn.ReadJsonMsg(hs); err != nil {
+		logger.Error("Failed to parse the json msg:", err)
 		conn.Close()
 		return
 	}
@@ -107,6 +108,8 @@ func (node *PipeMiner) Serve(conn *JsonConn) {
 		node.pipeServe(conn, hs.Sig, hs.Pipe)
 	case CmdPayChanel:
 		node.chargeServe(conn, hs.Sig, hs.Lic)
+	default:
+		logger.Error("No such command type:", hs.CmdType)
 	}
 }
 
