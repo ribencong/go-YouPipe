@@ -53,7 +53,8 @@ func (p *RightPipe) listenRequest() {
 
 	for {
 		n, err := p.chargeConn.ReadCryptData(p.serverBuf)
-		logger.Debugf("request from(%s) to %s", p.peerID, p.target)
+		logger.Debugf("request(%d, %v) from(%s) to %s",
+			n, err, p.peerID, p.target)
 		if n > 0 {
 			if _, errW := p.serverConn.Write(p.serverBuf[:n]); errW != nil {
 				logger.Warning("forward request err:", errW, p.peerID)
