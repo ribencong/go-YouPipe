@@ -36,7 +36,7 @@ func NewProducerConn(c net.Conn, key account.PipeCryptKey) *PipeConn {
 		return nil
 	}
 
-	logger.Debugf("read salt:%0x", salt[:])
+	logger.Debugf("read salt:%02x", salt[:])
 
 	return newConn(c, key, salt)
 }
@@ -82,7 +82,10 @@ func (c *PipeConn) WriteCryptData(buf []byte) (n int, err error) {
 	if len(buf) == 0 {
 		return
 	}
+
+	logger.Debugf("WriteCryptData before[%d]:%02x", len(buf), buf)
 	c.Coder.XORKeyStream(buf, buf)
+	logger.Debugf("WriteCryptData after[%d]:%02x", len(buf), buf)
 	n, err = c.Write(buf)
 	return
 }
@@ -93,6 +96,8 @@ func (c *PipeConn) ReadCryptData(buf []byte) (n int, err error) {
 		return
 	}
 	buf = buf[:n]
+	logger.Debugf("ReadCryptData before[%d]:%02x", n, buf)
 	c.Decoder.XORKeyStream(buf, buf)
+	logger.Debugf("ReadCryptData after[%d]:%02x", n, buf)
 	return
 }

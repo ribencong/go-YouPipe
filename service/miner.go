@@ -151,6 +151,8 @@ func (node *PipeMiner) initCharger(conn *JsonConn, sig []byte, l *License) (*ban
 		return nil, err
 	}
 
+	logger.Debugf("AES Key for this user[%2x]", charger.aesKey)
+
 	logger.Debug("create charger success:->", l.UserAddr)
 	return charger, nil
 }
