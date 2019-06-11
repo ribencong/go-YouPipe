@@ -4,6 +4,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"encoding/binary"
 	"fmt"
 	"github.com/ribencong/go-youPipe/account"
 	"io"
@@ -80,24 +81,56 @@ func newConn(c net.Conn, key account.PipeCryptKey, salt *Salt) *PipeConn {
 
 func (c *PipeConn) WriteCryptData(buf []byte) (n int, err error) {
 	if len(buf) == 0 {
+		err = fmt.Errorf("write empty data to sock client")
+		logger.Warning(err)
 		return
 	}
 
-	logger.Debugf("WriteCryptData before[%d]:%02x", len(buf), buf)
+	dataLen := uint32(len(buf))
+	logger.Debugf("WriteCryptData before[%d]:%02x", dataLen, buf)
 	c.Coder.XORKeyStream(buf, buf)
+
+	headerBuf := UintToByte(dataLen)
+	buf = append(headerBuf, buf...)
+
 	logger.Debugf("WriteCryptData after[%d]:%02x", len(buf), buf)
 	n, err = c.Write(buf)
 	return
 }
 
+func UintToByte(val uint32) []byte {
+	lenBuf := make([]byte, 4, 4)
+	binary.BigEndian.PutUint32(lenBuf, val)
+	return lenBuf
+}
+
+func ByteToUint(buff []byte) uint32 {
+	return binary.BigEndian.Uint32(buff)
+}
+
 func (c *PipeConn) ReadCryptData(buf []byte) (n int, err error) {
-	n, err = c.Read(buf)
-	if err != nil {
+
+	lenBuf := make([]byte, 4)
+	if _, err = io.ReadFull(c, lenBuf); err != nil {
+		logger.Warning(err)
 		return
 	}
-	buf = buf[:n]
-	logger.Debugf("ReadCryptData before[%d]:%02x", n, buf)
+
+	dataLen := ByteToUint(lenBuf)
+	if dataLen == 0 || dataLen >= BuffSize {
+		err = fmt.Errorf("wrong buffer size:%d", dataLen)
+		logger.Warning(err)
+		return
+	}
+
+	buf = buf[:dataLen]
+	if _, err = io.ReadFull(c, buf); err != nil {
+		logger.Warning(err)
+		return
+	}
+
+	logger.Debugf("ReadCryptData before[%d]:%02x", dataLen, buf)
 	c.Decoder.XORKeyStream(buf, buf)
-	logger.Debugf("ReadCryptData after[%d]:%02x", n, buf)
+	logger.Debugf("ReadCryptData after[%d]:%02x", dataLen, buf)
 	return
 }
