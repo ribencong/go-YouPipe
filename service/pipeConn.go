@@ -132,5 +132,6 @@ func (c *PipeConn) ReadCryptData(buf []byte) (n int, err error) {
 	logger.Debugf("ReadCryptData before[%d]:%02x", dataLen, buf)
 	c.Decoder.XORKeyStream(buf, buf)
 	logger.Debugf("ReadCryptData after[%d]:%02x", dataLen, buf)
+	n = int(dataLen)
 	return
 }

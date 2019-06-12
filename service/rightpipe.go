@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+//TODO::use sorted data
 type PipeReqData struct {
 	Addr   string
 	Target string
@@ -80,10 +81,6 @@ func (p *RightPipe) pushBackToClient() {
 			if errW != nil {
 				logger.Warningf("forward (%d-%d) to (%s) response err:%v",
 					n, nw, p.peerID, errW)
-				return
-			}
-			if n != nw {
-				logger.Warningf("write to client error:%d-%d", n, nw)
 				return
 			}
 		}
