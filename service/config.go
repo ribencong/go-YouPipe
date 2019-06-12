@@ -2,10 +2,11 @@ package service
 
 import (
 	"fmt"
+	"math"
 )
 
 const (
-	BuffSize         = 1 << 15
+	BuffSize         = math.MaxUint16
 	DefaultKingKey   = "YP5rttHPzRsAe2RmF52sLzbBk4jpoPwJLtABaMv6qn7kVm"
 	SocksServerPoint = "0.0.0.0"
 )

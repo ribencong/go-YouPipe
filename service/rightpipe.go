@@ -73,7 +73,7 @@ func (p *RightPipe) pushBackToClient() {
 
 	for {
 		n, err := p.serverConn.Read(p.serverBuf)
-		logger.Debugf("pull data(no:%d, err:%v) for :%s to(%s)",
+		logger.Debugf("pull data(no:%d, err:%v) from :%s to(%s)",
 			n, err, p.target, p.chargeConn.RemoteAddr().String())
 
 		if n > 0 {
@@ -83,6 +83,7 @@ func (p *RightPipe) pushBackToClient() {
 					n, nw, p.peerID, errW)
 				return
 			}
+			logger.Debug("push back success to client", n, nw)
 		}
 
 		if err != nil {
