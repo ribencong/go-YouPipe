@@ -25,8 +25,7 @@ func NewSalt() *Salt {
 type PipeConn struct {
 	IV *Salt
 	net.Conn
-	Coder   cipher.Stream
-	Decoder cipher.Stream
+	Block cipher.Block
 }
 
 func NewProducerConn(c net.Conn, key account.PipeCryptKey) *PipeConn {
@@ -72,10 +71,9 @@ func newConn(c net.Conn, key account.PipeCryptKey, salt *Salt) *PipeConn {
 	}
 
 	return &PipeConn{
-		IV:      salt,
-		Conn:    c,
-		Coder:   cipher.NewCFBEncrypter(block, salt[:]),
-		Decoder: cipher.NewCFBDecrypter(block, salt[:]),
+		IV:    salt,
+		Conn:  c,
+		Block: block,
 	}
 }
 
@@ -88,7 +86,9 @@ func (c *PipeConn) WriteCryptData(buf []byte) (n int, err error) {
 
 	dataLen := uint32(len(buf))
 	logger.Debugf("WriteCryptData before[%d]:%02x", dataLen, buf)
-	c.Coder.XORKeyStream(buf, buf)
+
+	coder := cipher.NewCFBEncrypter(c.Block, c.IV[:])
+	coder.XORKeyStream(buf, buf)
 
 	headerBuf := UintToByte(dataLen)
 	buf = append(headerBuf, buf...)
@@ -130,7 +130,8 @@ func (c *PipeConn) ReadCryptData(buf []byte) (n int, err error) {
 	}
 
 	logger.Debugf("ReadCryptData before[%d]:%02x", dataLen, buf)
-	c.Decoder.XORKeyStream(buf, buf)
+	decoder := cipher.NewCFBDecrypter(c.Block, c.IV[:])
+	decoder.XORKeyStream(buf, buf)
 	logger.Debugf("ReadCryptData after[%d]:%02x", dataLen, buf)
 	n = int(dataLen)
 	return
