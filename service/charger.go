@@ -46,8 +46,11 @@ func (c *bandCharger) waitingReceipt() {
 			return
 		}
 
-		c.fullFill(proof.UsedBandWidth)
-		c.receipt <- proof
+		go func() {
+			c.fullFill(proof.UsedBandWidth)
+			c.receipt <- proof
+		}()
+
 	}
 }
 

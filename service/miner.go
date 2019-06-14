@@ -137,7 +137,7 @@ func (node *PipeMiner) initCharger(conn *JsonConn, sig []byte, l *License) (*ban
 
 	charger := &bandCharger{
 		JsonConn:   conn,
-		receipt:    node.proofSaver.proofs,
+		receipt:    node.proofSaver.proofs, //TODO::refactor here
 		token:      BandWidthPerToPay,
 		peerID:     account.ID(l.UserAddr),
 		bill:       make(chan *PipeBill, MaxBandBill),
