@@ -85,7 +85,7 @@ func (c *PipeConn) WriteCryptData(buf []byte) (n int, err error) {
 	}
 
 	dataLen := uint32(len(buf))
-	logger.Debugf("WriteCryptData before[%d]:%02x", dataLen, buf)
+	//logger.Debugf("WriteCryptData before[%d]:%02x", dataLen, buf)
 
 	coder := cipher.NewCFBEncrypter(c.Block, c.IV[:])
 	coder.XORKeyStream(buf, buf)
@@ -93,7 +93,8 @@ func (c *PipeConn) WriteCryptData(buf []byte) (n int, err error) {
 	headerBuf := UintToByte(dataLen)
 	buf = append(headerBuf, buf...)
 
-	logger.Debugf("WriteCryptData after[%d]:%02x", len(buf), buf)
+	//logger.Debugf("WriteCryptData after[%d]:%02x", len(buf), buf)
+
 	n, err = c.Write(buf)
 	return
 }
@@ -129,10 +130,10 @@ func (c *PipeConn) ReadCryptData(buf []byte) (n int, err error) {
 		return
 	}
 
-	logger.Debugf("ReadCryptData before[%d]:%02x", dataLen, buf)
+	//logger.Debugf("ReadCryptData before[%d]:%02x", dataLen, buf)
 	decoder := cipher.NewCFBDecrypter(c.Block, c.IV[:])
 	decoder.XORKeyStream(buf, buf)
-	logger.Debugf("ReadCryptData after[%d]:%02x", dataLen, buf)
+	//logger.Debugf("ReadCryptData after[%d]:%02x", dataLen, buf)
 	n = int(dataLen)
 	return
 }
