@@ -121,7 +121,7 @@ func (c *PipeConn) ReadCryptData(buf []byte) (n int, err error) {
 	logger.Debugf("ReadCryptData Got Len:%02x", lenBuf)
 
 	dataLen := ByteToUint(lenBuf)
-	if dataLen == 0 || dataLen >= BuffSize {
+	if dataLen == 0 || dataLen > BuffSize {
 		err = fmt.Errorf("wrong buffer size:%d", dataLen)
 		logger.Warning(err)
 		return
