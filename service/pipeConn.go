@@ -83,6 +83,7 @@ func (c *PipeConn) WriteCryptData(buf []byte) (n int, err error) {
 		logger.Warning(err)
 		return
 	}
+	//TODO::Rest state and not new one any time
 
 	dataLen := uint32(len(buf))
 	//logger.Debugf("WriteCryptData before[%d]:%02x", dataLen, buf)
@@ -117,6 +118,8 @@ func (c *PipeConn) ReadCryptData(buf []byte) (n int, err error) {
 		return
 	}
 
+	logger.Debugf("ReadCryptData Got Len:%02x", lenBuf)
+
 	dataLen := ByteToUint(lenBuf)
 	if dataLen == 0 || dataLen >= BuffSize {
 		err = fmt.Errorf("wrong buffer size:%d", dataLen)
@@ -129,6 +132,8 @@ func (c *PipeConn) ReadCryptData(buf []byte) (n int, err error) {
 		logger.Warning(err)
 		return
 	}
+
+	//TODO::Rest state and not new one any time
 
 	//logger.Debugf("ReadCryptData before[%d]:%02x", dataLen, buf)
 	decoder := cipher.NewCFBDecrypter(c.Block, c.IV[:])
