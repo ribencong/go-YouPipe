@@ -35,13 +35,13 @@ func (b *PipeBill) String() string {
 		b.MinerAddr)
 }
 
-func (b *PipeBill) Verify(addr account.ID) bool {
+func (b *PipeBill) Verify(pubKey ed25519.PublicKey) bool {
 	data, err := json.Marshal(b.Mineral)
 	if err != nil {
 		return false
 	}
 
-	return ed25519.Verify(addr.ToPubKey(), data, b.MinerSig)
+	return ed25519.Verify(pubKey, data, b.MinerSig)
 }
 
 type PipeProof struct {
