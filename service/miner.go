@@ -210,6 +210,11 @@ func (node *PipeMiner) pipeServe(conn *JsonConn, sig []byte, data *PipeReqData) 
 	}
 
 	producerConn := NewProducerConn(conn.Conn, charger.aesKey)
+	if producerConn == nil {
+		logger.Warningf("Failed to create pipe for:[%s]", data.Target)
+		remoteConn.Close()
+		return
+	}
 	pipe := NewPipe(producerConn, remoteConn, charger, data.Target)
 	logger.Infof("New pipe %s", pipe.String())
 
