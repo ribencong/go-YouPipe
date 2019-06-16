@@ -240,6 +240,7 @@ func (node *PipeMiner) removeCharger(c *bandCharger) {
 	node.Lock()
 	defer node.Unlock()
 	delete(node.chargers, c.peerID.ToString())
+	c.finish()
 	logger.Debugf("Remove Customer(%s)", c.peerID)
 }
 

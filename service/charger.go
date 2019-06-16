@@ -14,6 +14,7 @@ const (
 	MaxBandBill       = 4       //
 )
 
+//TODO::Add keep alive logic
 type bandCharger struct {
 	*JsonConn
 	sync.RWMutex
@@ -56,8 +57,6 @@ func (c *bandCharger) waitingReceipt() {
 
 func (c *bandCharger) charging() {
 	defer logger.Infof("charging thread exit:%s", c.peerID)
-	defer c.Close()
-
 	for {
 		select {
 		case bill := <-c.bill:
@@ -102,6 +101,13 @@ func (c *bandCharger) Charge(n int) error {
 	}
 
 	return nil
+}
+
+func (c *bandCharger) finish() {
+	c.Close()
+	close(c.done)
+	close(c.bill)
+	close(c.receipt)
 }
 
 func createBill(customerAddr string, usedBand int64, id int) *PipeBill {
