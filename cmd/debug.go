@@ -107,6 +107,10 @@ func logLevel(_ *cobra.Command, args []string) {
 		panic("set the module of the log")
 	}
 
+	if logLevelPara < 0 || logLevelPara > 5 {
+		panic("wrong log level")
+	}
+
 	msg := &pbs.LogLevel{
 		Module: args[0],
 		Level:  int32(logLevelPara),
