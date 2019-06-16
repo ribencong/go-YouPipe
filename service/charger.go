@@ -107,7 +107,6 @@ func (c *bandCharger) finish() {
 	c.Close()
 	close(c.done)
 	close(c.bill)
-	close(c.receipt)
 }
 
 func createBill(customerAddr string, usedBand int64, id int) *PipeBill {
