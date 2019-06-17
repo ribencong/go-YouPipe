@@ -36,14 +36,14 @@ func (c *bandCharger) waitingReceipt() {
 	for {
 		proof := &PipeProof{}
 		if err := c.ReadJsonMsg(proof); err != nil {
-			logger.Warning("read bandwidth proof err:->", err)
+			logger.Warningf("(%s)read bandwidth proof err:%s->", c.peerID, err.Error())
 			c.done <- err
 			return
 		}
 
 		if !proof.Verify(c.peerID) {
-			err := fmt.Errorf("wrong signature for bandwidth bill:%v", proof)
-			logger.Error(err)
+			err := fmt.Errorf("(%s)wrong signature for bandwidth bill:%v", c.peerID, proof)
+			logger.Warning(err)
 			c.done <- err
 			return
 		}
@@ -62,12 +62,12 @@ func (c *bandCharger) charging() {
 		select {
 		case bill := <-c.bill:
 			if err := c.WriteJsonMsg(bill); err != nil {
-				logger.Error("charger channel err:->", err)
+				logger.Warningf("charger(%s) channel err:%s->", c.peerID, err.Error())
 				c.done <- err
 				return
 			}
 		case <-c.done:
-			logger.Warningf("charger received done signal")
+			logger.Warningf("(%s)charger received done signal", c.peerID)
 			return
 		}
 	}
@@ -88,7 +88,7 @@ func (c *bandCharger) Charge(n int) error {
 	c.token -= int64(n)
 	c.used += int64(n)
 
-	logger.Debugf("(%s)charged:token:%d, used:%d, toSub:%d",
+	logger.Infof("(%s)charged:token:%d, used:%d, toSub:%d",
 		c.peerID, c.token, c.used, n)
 
 	if c.used >= BillThreshold*2 {
@@ -106,6 +106,7 @@ func (c *bandCharger) Charge(n int) error {
 }
 
 func (c *bandCharger) finish() {
+	logger.Noticef("charger(%s) finished", c.peerID)
 	c.Close()
 	close(c.done)
 	close(c.bill)

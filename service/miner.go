@@ -227,7 +227,7 @@ func (node *PipeMiner) addCharger(c *bandCharger) {
 	node.Lock()
 	defer node.Unlock()
 	node.chargers[c.peerID.ToString()] = c
-	logger.Debugf("New Customer(%s)", c.peerID)
+	logger.Infof("New Customer(%s)", c.peerID)
 }
 
 func (node *PipeMiner) getCharger(peerId string) *bandCharger {
@@ -241,7 +241,7 @@ func (node *PipeMiner) removeCharger(c *bandCharger) {
 	defer node.Unlock()
 	delete(node.chargers, c.peerID.ToString())
 	c.finish()
-	logger.Debugf("Remove Customer(%s)", c.peerID)
+	logger.Infof("Remove Customer(%s)", c.peerID)
 }
 
 //TODO::
