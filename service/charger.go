@@ -108,8 +108,6 @@ func (c *bandCharger) Charge(n int) error {
 func (c *bandCharger) finish() {
 	logger.Noticef("charger(%s) finished", c.peerID)
 	c.Close()
-	close(c.done)
-	close(c.bill)
 }
 
 func createBill(customerAddr string, usedBand int64, id int) *PipeBill {
