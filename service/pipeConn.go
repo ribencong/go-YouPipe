@@ -53,8 +53,7 @@ func NewConsumerConn(c net.Conn, key account.PipeCryptKey) *PipeConn {
 		return nil
 	}
 
-	logger.Debugf("send salt:%0x", salt)
-
+	//logger.Debugf("send salt:%0x", salt)
 	return newConn(c, key, salt)
 }
 
