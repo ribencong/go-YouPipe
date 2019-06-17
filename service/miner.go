@@ -132,7 +132,7 @@ func (node *PipeMiner) initCharger(conn *JsonConn, sig []byte, l *License) (*ban
 	}
 
 	if c := node.getCharger(l.UserAddr); c != nil {
-		return nil, fmt.Errorf("duplicate payment channel")
+		return nil, fmt.Errorf("duplicate(%s) payment channel", l.UserAddr)
 	}
 
 	charger := &bandCharger{

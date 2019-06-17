@@ -29,6 +29,7 @@ type bandCharger struct {
 	aesKey     account.PipeCryptKey
 }
 
+//TODO:: Add keep alive message logic.
 func (c *bandCharger) waitingReceipt() {
 	defer logger.Infof("waiting receipt thread exit:%s", c.peerID)
 
@@ -66,6 +67,7 @@ func (c *bandCharger) charging() {
 				return
 			}
 		case <-c.done:
+			logger.Warningf("charger received done signal")
 			return
 		}
 	}
