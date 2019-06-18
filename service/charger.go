@@ -51,6 +51,7 @@ func (c *bandCharger) waitingReceipt() {
 		go func() {
 			c.fullFill(proof.UsedBandWidth)
 			c.receipt <- proof
+			logger.Notice(proof)
 		}()
 
 	}
