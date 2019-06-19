@@ -59,6 +59,8 @@ func (c *bandCharger) waitingReceipt() {
 
 func (c *bandCharger) charging() {
 	defer logger.Infof("charging thread exit:%s", c.peerID)
+	defer c.Close()
+
 	for {
 		select {
 		case bill := <-c.bill:
@@ -106,9 +108,9 @@ func (c *bandCharger) Charge(n int) error {
 	return nil
 }
 
-func (c *bandCharger) finish() {
-	logger.Noticef("charger(%s) finished", c.peerID)
-	c.Close()
+func (c *bandCharger) finish(err error) {
+	logger.Noticef("charger(%s) finished by err:%v", c.peerID, err)
+	c.done <- err
 }
 
 func createBill(customerAddr string, usedBand int64, id int) *PipeBill {

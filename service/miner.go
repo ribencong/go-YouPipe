@@ -132,7 +132,7 @@ func (node *PipeMiner) initCharger(conn *JsonConn, sig []byte, l *License) (*ban
 	}
 
 	if c := node.getCharger(l.UserAddr); c != nil {
-		return nil, fmt.Errorf("duplicate(%s) payment channel", l.UserAddr)
+		c.finish(fmt.Errorf("duplicate(%s) payment channel", l.UserAddr))
 	}
 
 	charger := &bandCharger{
@@ -240,7 +240,6 @@ func (node *PipeMiner) removeCharger(c *bandCharger) {
 	node.Lock()
 	defer node.Unlock()
 	delete(node.chargers, c.peerID.ToString())
-	c.finish()
 	logger.Infof("Remove Customer(%s)", c.peerID)
 }
 
