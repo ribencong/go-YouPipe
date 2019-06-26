@@ -85,7 +85,7 @@ func (c *PipeConn) WriteCryptData(buf []byte) (n int, err error) {
 	//TODO::Rest state and not new one any time
 
 	dataLen := uint32(len(buf))
-	//logger.Debugf("WriteCryptData before[%d]:%02x", dataLen, buf[:20])
+	logger.Debugf("WriteCryptData before[%d]:%02x", dataLen, buf[:20])
 
 	coder := cipher.NewCFBEncrypter(c.Block, c.IV[:])
 	coder.XORKeyStream(buf, buf)
@@ -93,7 +93,7 @@ func (c *PipeConn) WriteCryptData(buf []byte) (n int, err error) {
 	headerBuf := UintToByte(dataLen)
 	buf = append(headerBuf, buf...)
 
-	//logger.Debugf("WriteCryptData after[%d]:%02x", len(buf), buf[:20])
+	logger.Debugf("WriteCryptData after[%d]:%02x", len(buf), buf[:20])
 
 	n, err = c.Write(buf)
 	return
@@ -113,7 +113,11 @@ func (c *PipeConn) ReadCryptData(buf []byte) (n int, err error) {
 
 	lenBuf := make([]byte, 4)
 	if _, err = io.ReadFull(c, lenBuf); err != nil {
-		logger.Warning(err)
+
+		if err != io.EOF {
+			logger.Warningf("Read length of crypt pipe data err: %v ", err)
+		}
+
 		return
 	}
 
@@ -128,16 +132,18 @@ func (c *PipeConn) ReadCryptData(buf []byte) (n int, err error) {
 
 	buf = buf[:dataLen]
 	if _, err = io.ReadFull(c, buf); err != nil {
-		logger.Warning(err)
+		if err != io.EOF {
+			logger.Warningf("Read (%d) bytes of crypt pipe data err: %v ", dataLen, err)
+		}
 		return
 	}
 
 	//TODO::Rest state and not new one any time
 
-	//logger.Debugf("ReadCryptData before[%d]:%02x", dataLen, buf[:20])
+	logger.Debugf("ReadCryptData before[%d]:%02x", dataLen, buf[:20])
 	decoder := cipher.NewCFBDecrypter(c.Block, c.IV[:])
 	decoder.XORKeyStream(buf, buf)
-	//logger.Debugf("ReadCryptData after[%d]:%02x", dataLen, buf[:20])
+	logger.Debugf("ReadCryptData after[%d]:%02x", dataLen, buf[:20])
 	n = int(dataLen)
 	return
 }
